@@ -1,0 +1,337 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #05060a;
+  --bg-soft: #080a11;
+  --surface: rgba(255, 255, 255, 0.035);
+  --surface-strong: rgba(255, 255, 255, 0.06);
+  --border: rgba(255, 255, 255, 0.085);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --text: #eef1f7;
+  --text-dim: #a3adc2;
+  --text-faint: #6d7891;
+  --brand: #6d5cff;
+  --brand-soft: rgba(109, 92, 255, 0.14);
+  --accent: #22d3ee;
+  --radius: 18px;
+}
+
+* {
+  border-color: var(--border);
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-feature-settings: 'cv11', 'ss01', 'ss03';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: rgba(109, 92, 255, 0.4);
+  color: #fff;
+}
+
+:focus-visible {
+  outline: 2px solid rgba(124, 131, 255, 0.9);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* ---------- scrollbars ---------- */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #07080e;
+}
+::-webkit-scrollbar-thumb {
+  background: #1d2436;
+  border-radius: 999px;
+  border: 2px solid #07080e;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #2c3550;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ---------- materials ---------- */
+@layer components {
+  .surface {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.055) 0%, rgba(255, 255, 255, 0.02) 100%);
+    border: 1px solid var(--border);
+    backdrop-filter: blur(14px) saturate(140%);
+  }
+
+  .surface-flat {
+    background: rgba(255, 255, 255, 0.028);
+    border: 1px solid var(--border);
+  }
+
+  .panel {
+    background: linear-gradient(180deg, #0d111b 0%, #090c14 100%);
+    border: 1px solid var(--border);
+    box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.04) inset, 0 24px 60px -40px rgba(0, 0, 0, 1);
+  }
+
+  .hairline {
+    border-top: 1px solid var(--border);
+  }
+
+  .text-dim {
+    color: var(--text-dim);
+  }
+  .text-faint {
+    color: var(--text-faint);
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl text-sm font-semibold transition-all duration-200 select-none;
+    @apply px-4 py-2.5;
+    will-change: transform;
+  }
+  .btn:active {
+    transform: scale(0.975);
+  }
+  .btn:disabled {
+    opacity: 0.45;
+    pointer-events: none;
+  }
+
+  .btn-primary {
+    @apply btn text-white;
+    background: linear-gradient(180deg, #7c83ff 0%, #5a3df0 100%);
+    box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.28) inset, 0 14px 34px -16px rgba(109, 92, 255, 0.85);
+  }
+  .btn-primary:hover {
+    filter: brightness(1.08);
+  }
+
+  .btn-ghost {
+    @apply btn text-[color:var(--text-dim)];
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover {
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.075);
+    border-color: var(--border-strong);
+  }
+
+  .btn-outline {
+    @apply btn text-white;
+    border: 1px solid var(--border-strong);
+    background: transparent;
+  }
+  .btn-outline:hover {
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .btn-danger {
+    @apply btn text-white;
+    background: linear-gradient(180deg, #f43f5e 0%, #be123c 100%);
+    box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.2) inset;
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium tracking-wide;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+  }
+
+  .input {
+    @apply w-full rounded-xl px-3.5 py-2.5 text-sm text-white placeholder:text-[color:var(--text-faint)] transition-colors;
+    background: rgba(255, 255, 255, 0.035);
+    border: 1px solid var(--border);
+  }
+  .input:hover {
+    border-color: var(--border-strong);
+  }
+  .input:focus {
+    outline: none;
+    border-color: rgba(124, 131, 255, 0.75);
+    background: rgba(109, 92, 255, 0.07);
+    box-shadow: 0 0 0 3px rgba(109, 92, 255, 0.16);
+  }
+
+  .label {
+    @apply mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-[color:var(--text-faint)];
+  }
+
+  .card-hover {
+    transition: transform 320ms cubic-bezier(0.22, 1, 0.36, 1), border-color 220ms ease, box-shadow 320ms ease;
+    will-change: transform;
+  }
+  .card-hover:hover {
+    border-color: var(--border-strong);
+    box-shadow: 0 30px 60px -32px rgba(0, 0, 0, 0.95);
+  }
+
+  .section {
+    @apply mx-auto w-full max-w-[1400px] px-5 sm:px-8;
+  }
+
+  .kicker {
+    @apply text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--text-faint)];
+  }
+
+  .h-display {
+    @apply font-semibold tracking-[-0.035em] text-white;
+    letter-spacing: -0.035em;
+  }
+}
+
+/* ---------- decorative layers ---------- */
+.grid-bg {
+  background-image: linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+
+.noise {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.035;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.mask-fade-b {
+  mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
+}
+
+.mask-fade-x {
+  mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);
+}
+
+.shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+  animation: shimmer 2.2s infinite;
+}
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.scanline {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.035) 0px,
+    rgba(255, 255, 255, 0.035) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+}
+
+/* ---------- motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.gpu-layer {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+canvas {
+  display: block;
+  touch-action: none;
+}
+
+/* range inputs */
+input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  outline: none;
+}
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid #6d5cff;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+}
+input[type='range']::-moz-range-thumb {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid #6d5cff;
+  cursor: pointer;
+}
+
+/* ---------- game tile animations ---------- */
+@keyframes pop-in {
+  0% {
+    transform: scale(0.78);
+    opacity: 0.4;
+  }
+  60% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes pop-merge {
+  0% {
+    transform: scale(0.9);
+  }
+  55% {
+    transform: scale(1.12);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.animate-pop-in {
+  animation: pop-in 190ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.animate-pop-merge {
+  animation: pop-merge 230ms cubic-bezier(0.22, 1, 0.36, 1);
+}
