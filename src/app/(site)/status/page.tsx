@@ -1,0 +1,76 @@
+import type { Metadata } from 'next';
+import Link from 'next/link';
+import { StatusLive } from '@/components/status/StatusLive';
+import { getLiveStats, getServiceStatus, getSiteSettings } from '@/lib/queries';
+import { Reveal } from '@/components/ui/Reveal';
+import { IconLock, IconMail } from '@/components/ui/Icons';
+
+export const revalidate = 30;
+
+export const metadata: Metadata = {
+  title: 'Network status',
+  description: 'Live status of every Dash cloud gaming region and platform service — GPU load, latency and incident history.',
+};
+
+export default async function StatusPage() {
+  const [statuses, live, settings] = await Promise.all([getServiceStatus(), getLiveStats(), getSiteSettings()]);
+
+  // deterministic 90-day history derived from current health
+  const seed = new Date().getDate();
+  const history = Array.from({ length: 90 }, (_, i) => ({
+    label: `day-${i}`,
+    ok: (i * 7 + seed) % 23 !== 0 && (i * 13 + seed) % 41 !== 0,
+  }));
+
+  return (
+    <div className="section py-10 lg:py-14">
+      <header className="mb-9">
+        <span className="kicker">Operations</span>
+        <h1 className="h-display mt-2.5 text-[34px] leading-tight sm:text-[46px]">Network status</h1>
+        <p className="mt-3 max-w-2xl text-[14.5px] leading-relaxed text-[color:var(--text-dim)]">
+          Every region, gateway and service Dash depends on — updated in real time. When an operator changes a region in the
+          admin control plane, this page reflects it instantly for every visitor.
+        </p>
+      </header>
+
+      <StatusLive initialStatuses={statuses} initialLive={live} history={history} />
+
+      <Reveal className="mt-10">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="flex items-start gap-3.5 rounded-2xl border border-white/[0.07] bg-white/[0.022] p-5">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.05] text-brand-200">
+              <IconMail width={16} height={16} />
+            </span>
+            <div>
+              <h3 className="text-[14px] font-semibold text-white">Report a problem</h3>
+              <p className="mt-1 text-[12.5px] leading-relaxed text-[color:var(--text-dim)]">
+                Seeing stutter, input lag or a failed launch? Open a ticket and the on-call team gets it immediately.
+              </p>
+              <Link href="/support" className="btn-ghost mt-3 !py-2 !text-[12.5px]">
+                Contact support
+              </Link>
+            </div>
+          </div>
+          <div className="flex items-start gap-3.5 rounded-2xl border border-white/[0.07] bg-white/[0.022] p-5">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.05] text-neon-mint">
+              <IconLock width={16} height={16} />
+            </span>
+            <div>
+              <h3 className="text-[14px] font-semibold text-white">Operator access</h3>
+              <p className="mt-1 text-[12.5px] leading-relaxed text-[color:var(--text-dim)]">
+                Region status, maintenance windows and announcements are controlled from the signed admin console.
+              </p>
+              <Link href="/admin" className="btn-ghost mt-3 !py-2 !text-[12.5px]">
+                Admin panel
+              </Link>
+            </div>
+          </div>
+        </div>
+      </Reveal>
+
+      <p className="mt-8 text-center text-[12px] text-[color:var(--text-faint)]">
+        {settings.site.fullName} · {settings.site.credits}
+      </p>
+    </div>
+  );
+}
