@@ -75,7 +75,7 @@ export function PlayClient({
       if (endedRef.current) return;
       endedRef.current = true;
       const duration = startedAt.current ? Math.round((Date.now() - startedAt.current) / 1000) : 0;
-      const payload = { sessionId: sessionId.current, durationSeconds: duration, status: 'ended' as const };
+      const payload = { sessionId: sessionId.current, guestId: guestId.current || undefined, durationSeconds: duration, status: 'ended' as const };
       try {
         if (reason === 'unmount' && navigator.sendBeacon && sessionId.current) {
           navigator.sendBeacon('/api/session', new Blob([JSON.stringify(payload)], { type: 'application/json' }));
@@ -146,7 +146,7 @@ export function PlayClient({
         void fetch('/api/session', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ streaming: true, sessionId: sessionId.current, latencyMs: result.latency, resolution: result.resolution, region: result.region?.region ?? 'auto' }),
+          body: JSON.stringify({ streaming: true, sessionId: sessionId.current, guestId: guestId.current || undefined, latencyMs: result.latency, resolution: result.resolution, region: result.region?.region ?? 'auto' }),
         });
       }
     },
