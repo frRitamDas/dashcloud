@@ -116,23 +116,31 @@ export function StatusLive({
 
       <section>
         <div className="mb-3 flex items-end justify-between gap-4">
-          <h3 className="text-[15px] font-semibold tracking-tight text-white">Last 90 days</h3>
-          <span className="text-[11.5px] text-[color:var(--text-faint)]">
-            {history.filter((h) => h.ok).length}/{history.length} days fully operational
-          </span>
+          <h3 className="text-[15px] font-semibold tracking-tight text-white">Incident history</h3>
+          {history.length > 0 ? (
+            <span className="text-[11.5px] text-neutral-500">
+              {history.filter((day) => day.ok).length}/{history.length} days fully operational
+            </span>
+          ) : null}
         </div>
-        <div className="flex gap-[3px] overflow-hidden rounded-lg">
-          {history.map((day, i) => (
-            <motion.span
-              key={i}
-              initial={{ scaleY: 0 }}
-              animate={{ scaleY: 1 }}
-              transition={{ delay: i * 0.004, duration: 0.24 }}
-              className={cn('h-9 flex-1 origin-bottom rounded-[2px]', day.ok ? 'bg-[rgba(74,222,128,0.65)]' : 'bg-[rgba(251,191,36,0.7)]')}
-              title={`Day -${history.length - i}: ${day.ok ? 'no incidents' : 'partial degradation'}`}
-            />
-          ))}
-        </div>
+        {history.length > 0 ? (
+          <div className="flex gap-[3px] overflow-hidden rounded-lg">
+            {history.map((day, i) => (
+              <motion.span
+                key={day.label}
+                initial={{ scaleY: 0 }}
+                animate={{ scaleY: 1 }}
+                transition={{ delay: i * 0.004, duration: 0.24 }}
+                className={cn('h-9 flex-1 origin-bottom rounded-[2px]', day.ok ? 'bg-neutral-600' : 'bg-neutral-300')}
+                title={`${day.label}: ${day.ok ? 'no incident recorded' : 'degradation recorded'}`}
+              />
+            ))}
+          </div>
+        ) : (
+          <p className="rounded-xl border border-neutral-800 bg-neutral-950 px-4 py-5 text-sm leading-6 text-neutral-400">
+            Historical incident data is not available yet. This view will populate when incident events are recorded.
+          </p>
+        )}
       </section>
 
       <section id="regions" className="scroll-mt-24">
