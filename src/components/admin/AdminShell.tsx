@@ -1,7 +1,7 @@
 'use client';
 
 import { AnimatePresence, motion } from 'framer-motion';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import { adminApi } from './api';
 import { OverviewPanel, type OverviewData } from './OverviewPanel';
@@ -49,8 +49,11 @@ const tabs: { id: TabId; label: string; icon: React.ReactNode; group: string }[]
 
 export function AdminShell({ admin, initial }: { admin: { username: string; role: string }; initial: OverviewData }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { push } = useToast();
-  const [tab, setTab] = useState<TabId>('overview');
+  const requestedTab = searchParams.get('tab');
+  const initialTab: TabId = tabs.some((item) => item.id === requestedTab) ? (requestedTab as TabId) : 'overview';
+  const [tab, setTab] = useState<TabId>(initialTab);
   const [data, setData] = useState<OverviewData>(initial);
   const [refreshing, setRefreshing] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
@@ -70,6 +73,20 @@ export function AdminShell({ admin, initial }: { admin: { username: string; role
   }, [push]);
 
   useEffect(() => {
+    const requested = searchParams.get('tab');
+    if (tabs.some((item) => item.id === requested)) setTab(requested as TabId);
+  }, [searchParams]);
+
+  const navigateToTab = useCallback((nextTab: TabId) => {
+    setTab(nextTab);
+    const params = new URLSearchParams(searchParams.toString());
+    if (nextTab === 'overview') params.delete('tab');
+    else params.set('tab', nextTab);
+    const query = params.toString();
+    router.replace(query ? `/admin?${query}` : '/admin', { scroll: false });
+  }, [router, searchParams]);
+
+  useEffect(() => {
     const id = setInterval(() => refresh(true), 20_000);
     return () => clearInterval(id);
   }, [refresh]);
@@ -80,12 +97,12 @@ export function AdminShell({ admin, initial }: { admin: { username: string; role
       const index = Number(e.key) - 1;
       if (index >= 0 && index < tabs.length) {
         e.preventDefault();
-        setTab(tabs[index].id);
+        navigateToTab(tabs[index].id);
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, []);
+  }, [navigateToTab]);
 
   async function logout() {
     try {
@@ -132,7 +149,7 @@ export function AdminShell({ admin, initial }: { admin: { username: string; role
                       <button
                         key={t.id}
                         onClick={() => {
-                          setTab(t.id);
+                          navigateToTab(t.id);
                           setNavOpen(false);
                         }}
                         className={cn(
