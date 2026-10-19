@@ -2,7 +2,7 @@ import 'server-only';
 
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { supabaseServer } from '@/lib/supabase/server';
-import type { ScoreSubmission } from '@/features/games/contracts';
+import type { ScoreSubmission } from './contracts';
 
 export class ScoreSubmissionError extends Error {
   constructor(message: string, readonly status: number) {
