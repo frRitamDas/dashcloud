@@ -1,6 +1,5 @@
-import { sessionEndSchema, sessionStartSchema, sessionStreamingSchema, type SessionEndInput, type SessionStreamingInput } from '@/features/sessions/contracts';
-import { supabaseAdmin } from '@/lib/supabase/admin';
-import { supabaseServer } from '@/lib/supabase/server';
+import { sessionEndSchema, sessionStartSchema, sessionStreamingSchema } from '@/features/sessions/contracts';
+import { endSession, markSessionStreaming, SessionServiceError, startSession } from '@/features/sessions/service';
 import { fail, json, readJson, withPublicRateLimit } from '@/lib/api';
 
 export const dynamic = 'force-dynamic';
@@ -9,19 +8,37 @@ const startLimit = withPublicRateLimit('session-start', 25, 60_000);
 const endLimit = withPublicRateLimit('session-end', 40, 60_000);
 const streamingLimit = withPublicRateLimit('session-streaming', 60, 60_000);
 
+function serviceFailure(error: unknown) {
+  if (error instanceof SessionServiceError) return fail(error.message, error.status);
+  console.error('[sessions:request]', error instanceof Error ? error.message : error);
+  return fail('Session service is temporarily unavailable.', 503);
+}
+
 export async function POST(req: Request) {
   const raw = await readJson<Record<string, unknown>>(req);
 
   if (raw.sessionId && (raw.end === true || raw.durationSeconds !== undefined)) {
     const parsed = sessionEndSchema.safeParse(raw);
     if (!parsed.success) return fail('Invalid session end payload', 422);
-    return endSession(req, parsed.data);
+    const rate = endLimit(req);
+    if (!rate.ok) return fail('Too many session updates', 429, { retryAfter: rate.retryAfter });
+    try {
+      return json(await endSession(parsed.data));
+    } catch (error) {
+      return serviceFailure(error);
+    }
   }
 
   if (raw.sessionId && raw.streaming === true) {
     const parsed = sessionStreamingSchema.safeParse(raw);
     if (!parsed.success) return fail('Invalid session update payload', 422);
-    return markStreaming(req, parsed.data);
+    const rate = streamingLimit(req);
+    if (!rate.ok) return fail('Too many session updates', 429, { retryAfter: rate.retryAfter });
+    try {
+      return json(await markSessionStreaming(parsed.data));
+    } catch (error) {
+      return serviceFailure(error);
+    }
   }
 
   const rate = startLimit(req);
@@ -34,153 +51,23 @@ export async function POST(req: Request) {
     });
   }
 
-  const body = parsed.data;
-  const db = await supabaseServer();
-  const { data: { user } } = await db.auth.getUser();
-
-  if (!user && !body.guestId) return fail('A guest session identifier is required.', 400);
-
-  const { data: game, error: gameError } = await db
-    .from('games')
-    .select('id,status,play_mode')
-    .eq('slug', body.slug)
-    .eq('published', true)
-    .maybeSingle();
-
-  if (gameError) {
-    console.error('[sessions:game-lookup]', gameError.code, gameError.message);
-    return fail('Could not start a session right now.', 503);
+  try {
+    return json(await startSession(parsed.data), { status: 201 });
+  } catch (error) {
+    return serviceFailure(error);
   }
-  if (!game) return fail('Game not found', 404);
-  if (game.status === 'maintenance' || game.status === 'soon') {
-    return fail('This title is not currently available to launch.', 503);
-  }
-
-  const target = user ? db : supabaseAdmin();
-  const { data, error } = await target
-    .from('game_sessions')
-    .insert({
-      user_id: user?.id ?? null,
-      guest_id: user ? null : body.guestId,
-      game_id: game.id,
-      region: body.region ?? 'auto',
-      resolution: body.resolution ?? '1080p60',
-      latency_ms: body.latencyMs ?? null,
-      status: 'booting',
-    })
-    .select('id,started_at')
-    .single();
-
-  if (error || !data) {
-    console.error('[sessions:start]', error?.code, error?.message);
-    return fail('Could not start a session right now.', 503);
-  }
-
-  if (user) {
-    await db.from('profiles').update({ last_seen_at: new Date().toISOString() }).eq('id', user.id);
-  }
-
-  return json({ session: data, playMode: game.play_mode, status: game.status }, { status: 201 });
-}
-
-async function markStreaming(req: Request, body: SessionStreamingInput) {
-  const rate = streamingLimit(req);
-  if (!rate.ok) return fail('Too many session updates', 429, { retryAfter: rate.retryAfter });
-
-  const db = await supabaseServer();
-  const { data: { user } } = await db.auth.getUser();
-  if (!user && !body.guestId) return fail('Guest session identifier is required.', 403);
-
-  const target = user ? db : supabaseAdmin();
-  const { data: existing, error: readError } = await target
-    .from('game_sessions')
-    .select('id,user_id,guest_id,status')
-    .eq('id', body.sessionId)
-    .maybeSingle();
-
-  if (readError || !existing) return fail('Session not found', 404);
-  if (user ? existing.user_id !== user.id : existing.user_id !== null || existing.guest_id !== body.guestId) {
-    return fail('You cannot update this session.', 403);
-  }
-  if (existing.status === 'ended' || existing.status === 'failed') return fail('This session has already ended.', 409);
-
-  const { error } = await target
-    .from('game_sessions')
-    .update({
-      status: 'streaming',
-      latency_ms: body.latencyMs ?? null,
-      resolution: body.resolution ?? '1080p60',
-      region: body.region ?? 'auto',
-    })
-    .eq('id', body.sessionId);
-
-  if (error) {
-    console.error('[sessions:streaming]', error.code, error.message);
-    return fail('Could not update the session.', 503);
-  }
-  return json({ ok: true });
 }
 
 export async function PATCH(req: Request) {
-  const parsed = endSchema.safeParse(await readJson(req));
+  const parsed = sessionEndSchema.safeParse(await readJson(req));
   if (!parsed.success) return fail('Invalid session end payload', 422);
-  return endSession(req, parsed.data);
-}
 
-async function endSession(req: Request, body: SessionEndInput) {
   const rate = endLimit(req);
   if (!rate.ok) return fail('Too many session updates', 429, { retryAfter: rate.retryAfter });
 
-  const db = await supabaseServer();
-  const { data: { user } } = await db.auth.getUser();
-  if (!user && !body.guestId) return fail('Guest session identifier is required.', 403);
-
-  const target = user ? db : supabaseAdmin();
-  const { data: existing, error: readError } = await target
-    .from('game_sessions')
-    .select('id,user_id,guest_id,game_id,duration_seconds,status')
-    .eq('id', body.sessionId)
-    .maybeSingle();
-
-  if (readError || !existing) return fail('Session not found', 404);
-  if (user ? existing.user_id !== user.id : existing.user_id !== null || existing.guest_id !== body.guestId) {
-    return fail('You cannot end this session.', 403);
+  try {
+    return json(await endSession(parsed.data));
+  } catch (error) {
+    return serviceFailure(error);
   }
-  if (existing.status === 'ended' || existing.status === 'failed') return json({ ok: true, alreadyEnded: true });
-
-  const total = (existing.duration_seconds ?? 0) + body.durationSeconds;
-  const { error } = await target
-    .from('game_sessions')
-    .update({ ended_at: new Date().toISOString(), duration_seconds: total, status: body.status })
-    .eq('id', body.sessionId);
-
-  if (error) {
-    console.error('[sessions:end]', error.code, error.message);
-    return fail('Could not finish this session.', 503);
-  }
-
-  if (user && existing.user_id === user.id && body.durationSeconds >= 30) {
-    const xpGain = Math.min(240, Math.round(body.durationSeconds / 6));
-    const coinGain = Math.min(60, Math.round(body.durationSeconds / 30));
-    const { data: profile } = await db.from('profiles').select('xp,coins,total_play_seconds,games_played').eq('id', user.id).maybeSingle();
-
-    if (profile) {
-      const xp = (profile.xp ?? 0) + xpGain;
-      const { error: profileError } = await db
-        .from('profiles')
-        .update({
-          xp,
-          coins: (profile.coins ?? 0) + coinGain,
-          level: Math.max(1, Math.floor(Math.sqrt(xp / 250)) + 1),
-          total_play_seconds: (profile.total_play_seconds ?? 0) + body.durationSeconds,
-          games_played: (profile.games_played ?? 0) + 1,
-        })
-        .eq('id', user.id);
-      if (profileError) console.error('[sessions:progression]', profileError.code, profileError.message);
-    }
-
-    return json({ ok: true, xpGain, coinGain });
-  }
-
-  return json({ ok: true });
 }
