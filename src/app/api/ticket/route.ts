@@ -1,30 +1,33 @@
-import { z } from 'zod';
-import { supabaseAdmin } from '@/lib/supabase/admin';
+import { supportTicketSchema } from '@/features/support/contracts';
+import { createSupportTicket } from '@/features/support/service';
 import { fail, json, readJson, withPublicRateLimit } from '@/lib/api';
 
 export const dynamic = 'force-dynamic';
 
-const schema = z.object({
-  name: z.string().min(2).max(60),
-  email: z.string().email().max(120),
-  subject: z.string().min(3).max(140),
-  body: z.string().min(10).max(4000),
-  category: z.enum(['technical', 'account', 'billing', 'report', 'other']).default('technical'),
-});
-
 const limit = withPublicRateLimit('ticket', 4, 10 * 60_000);
 
 export async function POST(req: Request) {
-  const l = limit(req);
-  if (!l.ok) return fail('You have opened too many tickets. Please wait a few minutes.', 429, { retryAfter: l.retryAfter });
+  const rate = limit(req);
+  if (!rate.ok) {
+    return fail('You have opened too many tickets. Please wait a few minutes.', 429, {
+      retryAfter: rate.retryAfter,
+    });
+  }
 
-  const parsed = schema.parse(await readJson(req));
-  const { data, error } = await supabaseAdmin()
-    .from('tickets')
-    .insert({ ...parsed, status: 'open', priority: 'normal' })
-    .select('id,reference,created_at')
-    .single();
+  const parsed = supportTicketSchema.safeParse(await readJson(req));
+  if (!parsed.success) {
+    return fail('Please check the ticket details and try again.', 422, {
+      issues: parsed.error.issues.map((issue) => ({
+        path: issue.path.join('.'),
+        message: issue.message,
+      })),
+    });
+  }
 
-  if (error) return fail(error.message, 500);
-  return json({ ok: true, ticket: data });
+  try {
+    const ticket = await createSupportTicket(parsed.data);
+    return json({ ok: true, ticket }, { status: 201 });
+  } catch {
+    return fail('We could not open your ticket right now. Please try again.', 503);
+  }
 }
