@@ -36,7 +36,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#05060a',
+  themeColor: '#080808',
   colorScheme: 'dark',
   width: 'device-width',
   initialScale: 1,
@@ -46,7 +46,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="min-h-screen bg-[#05060a] text-white antialiased">
+      <body className="min-h-screen bg-[var(--bg)] text-[var(--text)] antialiased">
         <Providers>
           <SiteBackground />
           <a
