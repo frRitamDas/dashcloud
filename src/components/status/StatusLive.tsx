@@ -69,8 +69,9 @@ export function StatusLive({
   const regions = statuses.filter((s) => s.region !== 'Global');
   const services = statuses.filter((s) => s.region === 'Global');
   const affected = statuses.filter((s) => s.status !== 'operational').length;
-  const allOk = affected === 0;
-  const headline = allOk ? 'All systems operational' : `${affected} component${affected === 1 ? '' : 's'} affected`;
+  const hasStatus = statuses.length > 0;
+  const allOk = hasStatus && affected === 0;
+  const headline = !hasStatus ? 'Status data unavailable' : allOk ? 'All systems operational' : `${affected} component${affected === 1 ? '' : 's'} affected`;
 
   return (
     <div className="space-y-9">
@@ -80,7 +81,7 @@ export function StatusLive({
         transition={{ duration: 0.5 }}
         className={cn(
           'relative overflow-hidden rounded-2xl border p-6 sm:p-7',
-          allOk ? 'border-[rgba(74,222,128,0.24)] bg-[rgba(74,222,128,0.06)]' : 'border-[rgba(251,191,36,0.26)] bg-[rgba(251,191,36,0.06)]',
+          !hasStatus ? 'border-neutral-800 bg-neutral-950' : allOk ? 'border-[rgba(74,222,128,0.24)] bg-[rgba(74,222,128,0.06)]' : 'border-[rgba(251,191,36,0.26)] bg-[rgba(251,191,36,0.06)]',
         )}
       >
         <div
