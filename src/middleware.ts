@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 import { ADMIN_COOKIE, verifyAdminToken } from '@/lib/admin-session-core';
+import { safeInternalPath } from '@/lib/redirects';
 
 const PROTECTED = ['/profile'];
 const ADMIN = ['/admin'];
@@ -40,11 +41,8 @@ export async function middleware(request: NextRequest) {
 
     if (pathname === '/login' || pathname === '/signup') {
       if (user) {
-        const next = request.nextUrl.searchParams.get('next');
-        const redirect = request.nextUrl.clone();
-        redirect.pathname = next || '/profile';
-        redirect.search = '';
-        return NextResponse.redirect(redirect);
+        const next = safeInternalPath(request.nextUrl.searchParams.get('next'), '/profile');
+        return NextResponse.redirect(new URL(next, request.url));
       }
     }
   }
