@@ -5,6 +5,7 @@ import { Reveal } from '@/components/ui/Reveal';
 import { IconBolt, IconCheck, IconClose, IconSparkles } from '@/components/ui/Icons';
 import { getLiveStats, getSiteSettings } from '@/lib/queries';
 import { cn } from '@/lib/utils';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 export const revalidate = 60;
 
@@ -36,15 +37,13 @@ export default async function PricingPage() {
 
   return (
     <>
-      <div className="section py-12 lg:py-16">
-        <header className="mx-auto max-w-3xl text-center">
-          <span className="kicker">Pricing</span>
-          <h1 className="h-display mt-3 text-[36px] leading-[1.05] sm:text-[52px]">Free forever. Optional upgrades.</h1>
-          <p className="mt-4 text-[15px] leading-relaxed text-[color:var(--text-dim)]">
-            Every game on Dash is playable at no cost — no trial timer, no download, no card. Paid tiers only add
-            comfort: more resolution, longer sessions and a shorter queue. We will never gate a title behind a paywall.
-          </p>
-        </header>
+      <div className="page-shell">
+        <PageHeader
+          eyebrow="Pricing"
+          title="Play first. Upgrade only if you want."
+          description="Start free and explore the catalogue. Optional tiers are presented separately, with no payment required to try the free experience."
+          centered
+        />
 
         <Reveal className="mt-12">
           <div className="grid gap-4 lg:grid-cols-3">
