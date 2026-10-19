@@ -34,11 +34,11 @@ export default async function AboutPage() {
 
   return (
     <>
-      <div className="section py-12 lg:py-16">
-        <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-14">
+      <div className="page-shell">
+        <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-16">
           <div>
-            <span className="kicker">About</span>
-            <h1 className="h-display mt-3 text-[34px] leading-[1.08] sm:text-[50px]">
+            <span className="kicker">Our approach</span>
+            <h1 className="h-display mt-3 text-[36px] leading-[1.04] tracking-[-0.05em] sm:text-[54px]">
               Games should not depend on the machine you were born with.
             </h1>
             <div className="mt-6 space-y-4 text-[14.5px] leading-[1.75] text-[color:var(--text-dim)]">
