@@ -4,6 +4,7 @@ import { StatusLive } from '@/components/status/StatusLive';
 import { getLiveStats, getServiceStatus, getSiteSettings } from '@/lib/queries';
 import { Reveal } from '@/components/ui/Reveal';
 import { IconLock, IconMail } from '@/components/ui/Icons';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 export const revalidate = 30;
 
@@ -23,15 +24,12 @@ export default async function StatusPage() {
   }));
 
   return (
-    <div className="section py-10 lg:py-14">
-      <header className="mb-9">
-        <span className="kicker">Operations</span>
-        <h1 className="h-display mt-2.5 text-[34px] leading-tight sm:text-[46px]">Network status</h1>
-        <p className="mt-3 max-w-2xl text-[14.5px] leading-relaxed text-[color:var(--text-dim)]">
-          Every region, gateway and service Dash depends on — updated in real time. When an operator changes a region in the
-          admin control plane, this page reflects it instantly for every visitor.
-        </p>
-      </header>
+    <div className="page-shell">
+      <PageHeader
+        eyebrow="Platform health"
+        title="Service status."
+        description="Live health for the regions and services that power Dash. Status changes are managed through the authenticated operations console."
+      />
 
       <StatusLive initialStatuses={statuses} initialLive={live} history={history} />
 
