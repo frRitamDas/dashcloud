@@ -5,6 +5,7 @@ import { Reveal } from '@/components/ui/Reveal';
 import { IconActivity, IconMail, IconTicket, IconWifi } from '@/components/ui/Icons';
 import { getServiceStatus, getSiteSettings } from '@/lib/queries';
 import { StatusDot } from '@/components/ui/Badge';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 export const revalidate = 30;
 
@@ -45,23 +46,13 @@ export default async function SupportPage() {
   const affected = statuses.filter((s) => s.status !== 'operational');
 
   return (
-    <div className="section py-10 lg:py-14">
-      <header className="mb-10 max-w-2xl">
-        <span className="kicker">Support</span>
-        <h1 className="h-display mt-2.5 text-[34px] leading-tight sm:text-[46px]">We answer fast.</h1>
-        <p className="mt-3 text-[14.5px] leading-relaxed text-[color:var(--text-dim)]">
-          Tell us what broke and an operator picks it up. Include your region and the game slug if you have them —
-          it usually halves the time to a fix.
-        </p>
-        <div className="mt-5 flex flex-wrap gap-2.5">
-          <a href={`mailto:${site.supportEmail}`} className="btn-ghost !py-2.5 !text-[13px]">
-            <IconMail width={15} height={15} /> {site.supportEmail}
-          </a>
-          <Link href="/status" className="btn-ghost !py-2.5 !text-[13px]">
-            <IconActivity width={15} height={15} /> Network status
-          </Link>
-        </div>
-      </header>
+    <div className="page-shell">
+      <PageHeader
+        eyebrow="Support"
+        title="Get back to playing."
+        description="Tell us what happened and include the game slug or region when possible. Your ticket is stored securely for the support team."
+        action={<div className="flex flex-wrap gap-2.5"><a href={`mailto:${site.supportEmail}`} className="btn-ghost !py-2.5 !text-[13px]"><IconMail width={15} height={15} />{site.supportEmail}</a><Link href="/status" className="btn-ghost !py-2.5 !text-[13px]"><IconActivity width={15} height={15} />Service status</Link></div>}
+      />
 
       {affected.length > 0 && (
         <Reveal className="mb-8">
