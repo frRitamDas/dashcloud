@@ -19,7 +19,7 @@ export default async function HomePage() {
   const featured = published.filter((game) => game.featured).slice(0, 4);
   const popular = [...published].sort((a, b) => b.players_online - a.players_online).slice(0, 8);
   const instant = published.filter((game) => game.play_mode === 'native').slice(0, 4);
-  const readyRegions = new Set(statuses.filter((status) => status.status === 'operational' || status.status === 'healthy').map((status) => status.region)).size;
+  const readyRegions = new Set(statuses.filter((status) => status.status === 'operational').map((status) => status.region)).size;
 
   return (
     <div className="bg-[#080808] text-white">
