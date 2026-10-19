@@ -213,7 +213,7 @@ export function AdminShell({ admin, initial }: { admin: { username: string; role
             {data.kpis.healthyServices === data.kpis.totalServices ? 'All healthy' : `${data.kpis.totalServices - data.kpis.healthyServices} affected`}
           </Badge>
           {data.kpis.openTickets > 0 && (
-            <button onClick={() => setTab('tickets')} className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.03] text-white/70 transition-colors hover:text-white">
+            <button onClick={() => navigateToTab('tickets')} className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.03] text-white/70 transition-colors hover:text-white">
               <IconBell width={16} height={16} />
               <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#fb7185] px-1 font-mono text-[10px] font-bold text-black">
                 {data.kpis.openTickets}
@@ -231,7 +231,7 @@ export function AdminShell({ admin, initial }: { admin: { username: string; role
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.26, ease: [0.22, 1, 0.36, 1] }}
             >
-              {tab === 'overview' && <OverviewPanel data={data} onRefresh={() => refresh()} onNavigate={(t) => setTab(t as TabId)} />}
+              {tab === 'overview' && <OverviewPanel data={data} onRefresh={() => refresh()} onNavigate={(t) => navigateToTab(t as TabId)} />}
               {tab === 'live' && <LivePanel statuses={data.status} onChanged={() => refresh(true)} />}
               {tab === 'games' && <GamesPanel />}
               {tab === 'users' && <UsersPanel />}
