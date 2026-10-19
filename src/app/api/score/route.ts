@@ -1,4 +1,4 @@
-import { scoreSubmissionSchema } from '@/features/games/contracts';
+import { scoreSubmissionSchema } from '@/features/scores/contracts';
 import { ScoreSubmissionError, submitScore } from '@/features/scores/service';
 import { fail, json, readJson, withPublicRateLimit } from '@/lib/api';
 import { supabaseServer } from '@/lib/supabase/server';
