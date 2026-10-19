@@ -16,12 +16,8 @@ export const metadata: Metadata = {
 export default async function StatusPage() {
   const [statuses, live, settings] = await Promise.all([getServiceStatus(), getLiveStats(), getSiteSettings()]);
 
-  // deterministic 90-day history derived from current health
-  const seed = new Date().getDate();
-  const history = Array.from({ length: 90 }, (_, i) => ({
-    label: `day-${i}`,
-    ok: (i * 7 + seed) % 23 !== 0 && (i * 13 + seed) % 41 !== 0,
-  }));
+  // Historical uptime is intentionally empty until incident events are persisted.
+  const history: { label: string; ok: boolean }[] = [];
 
   return (
     <div className="page-shell">
