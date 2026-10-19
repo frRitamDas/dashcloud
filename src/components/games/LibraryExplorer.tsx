@@ -72,10 +72,18 @@ export function LibraryExplorer({ initialGames, genres }: { initialGames: Game[]
   }, [search, genre, mode, sort, pathname, router]);
 
   useEffect(() => {
-    const nextMode = params.get('mode');
-    if (nextMode === 'native' && mode !== 'native') setMode('native');
-    if (nextMode === 'cloud' && mode !== 'cloud') setMode('cloud');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const nextSearch = params.get('q') ?? '';
+    const nextGenre = params.get('genre') ?? 'all';
+    const modeParam = params.get('mode');
+    const nextMode: 'all' | 'native' | 'cloud' =
+      modeParam === 'native' || modeParam === 'cloud' ? modeParam : 'all';
+    const sortParam = params.get('sort');
+    const nextSort: Sort = sortParam === 'rating' || sortParam === 'newest' || sortParam === 'az' ? sortParam : 'popular';
+
+    setSearch(nextSearch);
+    setGenre(nextGenre);
+    setMode(nextMode);
+    setSort(nextSort);
   }, [params]);
 
   const activeFilters = [
@@ -137,7 +145,7 @@ export function LibraryExplorer({ initialGames, genres }: { initialGames: Game[]
         </div>
 
         <AnimatePresence initial={false}>
-          {(showFilters || typeof window === 'undefined') && (
+          {showFilters && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}

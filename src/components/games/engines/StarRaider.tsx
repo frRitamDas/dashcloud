@@ -324,7 +324,10 @@ export default function StarRaider({ onScore, onTelemetry, paused, accent, muted
             setScore(s.score);
             s.waveKills += 1;
             s.shake = f.kind === 'boss' ? 12 : 4;
-            if (!muted) (f.kind === 'boss' ? sfx.explode() : sfx.hit());
+            if (!muted) {
+              if (f.kind === 'boss') sfx.explode();
+              else sfx.hit();
+            }
             const pieces = f.kind === 'boss' ? 60 : 16;
             for (let i = 0; i < pieces; i++) {
               const a = Math.random() * Math.PI * 2;

@@ -306,7 +306,7 @@ export default function VoxelSandbox({ onScore, onTelemetry, paused, muted, qual
       let tMaxX = stepX === 0 ? Infinity : ((stepX > 0 ? x + 1 - origin.x : origin.x - x) || 1e-6) * tDeltaX;
       let tMaxY = stepY === 0 ? Infinity : ((stepY > 0 ? y + 1 - origin.y : origin.y - y) || 1e-6) * tDeltaY;
       let tMaxZ = stepZ === 0 ? Infinity : ((stepZ > 0 ? z + 1 - origin.z : origin.z - z) || 1e-6) * tDeltaZ;
-      let normal = new THREE.Vector3();
+      const normal = new THREE.Vector3();
       let t = 0;
       while (t <= maxDist) {
         if (world.has(key(x, y, z))) return { x, y, z, normal };

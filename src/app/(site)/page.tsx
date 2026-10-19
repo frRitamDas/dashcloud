@@ -18,7 +18,6 @@ export default async function HomePage() {
   const published = games.filter((game) => game.published);
   const featured = published.filter((game) => game.featured).slice(0, 4);
   const popular = [...published].sort((a, b) => b.players_online - a.players_online).slice(0, 8);
-  const instant = published.filter((game) => game.play_mode === 'native').slice(0, 4);
   const readyRegions = new Set(statuses.filter((status) => status.status === 'operational').map((status) => status.region)).size;
 
   return (
@@ -79,7 +78,7 @@ export default async function HomePage() {
           <Link href="/games" className="hidden items-center gap-2 text-sm font-semibold text-neutral-300 hover:text-white sm:inline-flex">All games <IconArrowRight width={16} height={16} /></Link>
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {(featured.length ? featured : popular.slice(0, 4)).map((game, index) => (
+          {(featured.length ? featured : popular.slice(0, 4)).map((game) => (
             <Link key={game.id} href={game.play_mode === 'native' ? `/play/${game.slug}` : `/games/${game.slug}`} className="group border border-white/10 bg-[#0d0d0d] transition-colors hover:border-white/40">
               <div className="relative aspect-[1.18/1] overflow-hidden bg-neutral-900"><GameArt slug={game.slug} title={game.title} genre={game.genre} accent="#666666" coverUrl={game.cover_url} rounded={false} /><span className="absolute left-3 top-3 border border-white/20 bg-black/75 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-neutral-200">{game.genre}</span></div>
               <div className="p-4"><div className="flex items-start justify-between gap-3"><h3 className="font-semibold tracking-tight">{game.title}</h3><span className="text-sm text-neutral-500 transition-transform group-hover:translate-x-1">↗</span></div><p className="mt-1 line-clamp-2 min-h-10 text-xs leading-5 text-neutral-500">{game.tagline || game.description || 'Open the game page for details.'}</p><div className="mt-4 flex items-center justify-between border-t border-white/10 pt-3 text-[11px] text-neutral-500"><span>{formatNumber(game.players_online)} playing</span><span className="font-semibold text-neutral-200">{game.play_mode === 'native' ? 'Play now' : 'Game details'}</span></div></div>

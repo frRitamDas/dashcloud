@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { adminApi } from './api';
@@ -120,7 +121,7 @@ export function AdminLogin() {
         </div>
 
         <p className="mt-4 text-center text-[11.5px] text-[color:var(--text-faint)]">
-          Not an operator? <a href="/" className="underline decoration-white/25 underline-offset-2 hover:text-white">Back to Dash</a>
+          Not an operator? <Link href="/" className="underline decoration-white/25 underline-offset-2 hover:text-white">Back to Dash</Link>
         </p>
       </motion.div>
     </div>

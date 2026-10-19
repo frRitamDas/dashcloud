@@ -1,5 +1,3 @@
-import type { ReactNode } from 'react';
-
 export type Quality = 'low' | 'medium' | 'high';
 
 export interface EngineProps {

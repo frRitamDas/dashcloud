@@ -270,7 +270,8 @@ export default function NeonSnake({ onScore, onTelemetry, paused, accent, muted 
           const a = (i * 4 * Math.PI) / 5 - Math.PI / 2;
           const px = cx + Math.cos(a) * r;
           const py = cy + Math.sin(a) * r;
-          i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
         }
         ctx.closePath();
         ctx.fill();

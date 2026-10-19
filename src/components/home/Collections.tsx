@@ -30,7 +30,7 @@ export function GenreGrid({ games }: { games: Game[] }) {
         }
       />
       <RevealGroup className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
-        {genres.map(([genre, list], i) => {
+        {genres.map(([genre, list]) => {
           const seed = hashString(genre);
           const accent = list[0]?.accent ?? '#6d5cff';
           return (

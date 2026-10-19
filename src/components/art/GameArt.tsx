@@ -297,7 +297,7 @@ export function GameBanner({
     );
   }
   return (
-    <div className={`${className ?? ''} relative h-full w-full overflow-hidden`} style={{ background: `linear-gradient(115deg, ${shade(accent, -0.3)}, #07080e 62%)` }}>
+    <div role="img" aria-label={`${title} ${genre} banner artwork`} data-game-slug={slug} className={`${className ?? ''} relative h-full w-full overflow-hidden`} style={{ background: `linear-gradient(115deg, ${shade(accent, -0.3)}, #07080e 62%)` }}>
       <div className="absolute inset-0 grid-bg opacity-[0.5]" />
       <div
         className="absolute -left-24 top-[-40%] h-[130%] w-[60%] rotate-[14deg] blur-3xl"

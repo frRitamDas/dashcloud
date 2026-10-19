@@ -9,7 +9,7 @@ import { supabaseBrowser } from '@/lib/supabase/client';
 import { GameArt } from '@/components/art/GameArt';
 import { Tabs } from '@/components/ui/Tabs';
 import { useToast } from '@/components/ui/Toast';
-import { ConfirmDialog, Modal } from '@/components/ui/Modal';
+import { ConfirmDialog } from '@/components/ui/Modal';
 import { Spinner } from '@/components/ui/Skeleton';
 import {
   IconBolt,

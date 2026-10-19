@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { PlayClient } from '@/components/play/PlayClient';
-import { getGameBySlug, getGames, getServiceStatus, getSiteSettings } from '@/lib/queries';
+import { getGameBySlug, getGames, getServiceStatus } from '@/lib/queries';
 import { supabaseServer } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
@@ -24,11 +24,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function PlayPage({ params }: Props) {
   const { slug } = await params;
   const sb = await supabaseServer();
-  const [game, statuses, games, settings] = await Promise.all([
+  const [game, statuses, games] = await Promise.all([
     getGameBySlug(slug),
     getServiceStatus(),
     getGames({ playMode: 'native', limit: 8 }),
-    getSiteSettings(),
   ]);
   if (!game) notFound();
   if (!game.published) notFound();
