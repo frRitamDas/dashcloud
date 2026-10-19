@@ -61,15 +61,27 @@ export async function getGames(opts: {
   featuredOnly?: boolean;
   limit?: number;
 } = {}): Promise<Game[]> {
-  return listPublishedGames(opts);
+  try {
+    return await listPublishedGames(opts);
+  } catch {
+    return [];
+  }
 }
 
 export async function getGameBySlug(slug: string): Promise<Game | null> {
-  return findGameBySlug(slug);
+  try {
+    return await findGameBySlug(slug);
+  } catch {
+    return null;
+  }
 }
 
 export async function getGenres(): Promise<string[]> {
-  return listGameGenres();
+  try {
+    return await listGameGenres();
+  } catch {
+    return [];
+  }
 }
 
 export async function getServiceStatus(): Promise<ServiceStatus[]> {
