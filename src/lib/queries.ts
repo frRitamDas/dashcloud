@@ -86,40 +86,61 @@ export async function getGenres(): Promise<string[]> {
 }
 
 export async function getServiceStatus(): Promise<ServiceStatus[]> {
-  const db = supabaseAnon();
-  const { data } = await db.from('service_status').select('*').order('sort_order', { ascending: true });
-  return (data ?? []) as unknown as ServiceStatus[];
+  try {
+    const { data, error } = await supabaseAnon().from('service_status').select('*').order('sort_order', { ascending: true });
+    if (error) console.error('[queries:service-status]', error.code, error.message);
+    return (data ?? []) as unknown as ServiceStatus[];
+  } catch (error) {
+    console.error('[queries:service-status]', error instanceof Error ? error.message : error);
+    return [];
+  }
 }
 
 export async function getAnnouncements(): Promise<Announcement[]> {
-  const db = supabaseAnon();
-  const { data } = await db.from('announcements').select('*').eq('active', true).order('created_at', { ascending: false }).limit(5);
-  return (data ?? []) as unknown as Announcement[];
+  try {
+    const { data, error } = await supabaseAnon().from('announcements').select('*').eq('active', true).order('created_at', { ascending: false }).limit(5);
+    if (error) console.error('[queries:announcements]', error.code, error.message);
+    return (data ?? []) as unknown as Announcement[];
+  } catch (error) {
+    console.error('[queries:announcements]', error instanceof Error ? error.message : error);
+    return [];
+  }
 }
 
 export async function getLeaderboard(slug: string, limit = 25): Promise<ScoreRow[]> {
-  const db = supabaseAnon();
-  const game = await getGameBySlug(slug);
-  if (!game) return [];
-  const { data } = await db
-    .from('scores')
-    .select('id,user_id,guest_name,game_id,score,metric,payload,created_at,profiles(username,display_name,avatar_url,level)')
-    .eq('game_id', game.id)
-    .order('score', { ascending: false })
-    .order('created_at', { ascending: false })
-    .limit(limit);
-  return (data ?? []) as unknown as ScoreRow[];
+  try {
+    const db = supabaseAnon();
+    const game = await getGameBySlug(slug);
+    if (!game) return [];
+    const { data, error } = await db
+      .from('scores')
+      .select('id,user_id,guest_name,game_id,score,metric,payload,created_at,profiles(username,display_name,avatar_url,level)')
+      .eq('game_id', game.id)
+      .order('score', { ascending: false })
+      .order('created_at', { ascending: false })
+      .limit(Math.max(1, Math.min(100, Math.trunc(limit))));
+    if (error) console.error('[queries:leaderboard]', error.code, error.message);
+    return (data ?? []) as unknown as ScoreRow[];
+  } catch (error) {
+    console.error('[queries:leaderboard]', error instanceof Error ? error.message : error);
+    return [];
+  }
 }
 
 export async function getGlobalTopScores(limit = 12): Promise<ScoreRow[]> {
-  const db = supabaseAnon();
-  const { data } = await db
-    .from('scores')
-    .select('id,user_id,guest_name,game_id,score,metric,created_at,profiles(username,display_name,avatar_url,level),games(slug,title,accent)')
-    .order('score', { ascending: false })
-    .order('created_at', { ascending: false })
-    .limit(limit);
-  return (data ?? []) as unknown as ScoreRow[];
+  try {
+    const { data, error } = await supabaseAnon()
+      .from('scores')
+      .select('id,user_id,guest_name,game_id,score,metric,created_at,profiles(username,display_name,avatar_url,level),games(slug,title,accent)')
+      .order('score', { ascending: false })
+      .order('created_at', { ascending: false })
+      .limit(Math.max(1, Math.min(50, Math.trunc(limit))));
+    if (error) console.error('[queries:global-scores]', error.code, error.message);
+    return (data ?? []) as unknown as ScoreRow[];
+  } catch (error) {
+    console.error('[queries:global-scores]', error instanceof Error ? error.message : error);
+    return [];
+  }
 }
 
 export async function getLiveStats(): Promise<LiveStats> {
@@ -155,27 +176,47 @@ export async function getLiveStats(): Promise<LiveStats> {
 }
 
 export async function getProfile(id: string): Promise<Profile | null> {
-  const db = supabaseAnon();
-  const { data } = await db.from('profiles').select('*').eq('id', id).maybeSingle();
-  return (data as unknown as Profile) ?? null;
+  try {
+    const { data, error } = await supabaseAnon().from('profiles').select('*').eq('id', id).maybeSingle();
+    if (error) console.error('[queries:profile]', error.code, error.message);
+    return (data as unknown as Profile) ?? null;
+  } catch (error) {
+    console.error('[queries:profile]', error instanceof Error ? error.message : error);
+    return null;
+  }
 }
 
 export async function getPlayerScores(userId: string, limit = 40): Promise<ScoreRow[]> {
-  const db = supabaseAnon();
-  const { data } = await db
-    .from('scores')
-    .select('id,score,metric,created_at,game_id,payload,games(slug,title,accent)')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false })
-    .limit(limit);
-  return (data ?? []) as unknown as ScoreRow[];
+  try {
+    const { data, error } = await supabaseAnon()
+      .from('scores')
+      .select('id,score,metric,created_at,game_id,payload,games(slug,title,accent)')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(Math.max(1, Math.min(100, Math.trunc(limit))));
+    if (error) console.error('[queries:player-scores]', error.code, error.message);
+    return (data ?? []) as unknown as ScoreRow[];
+  } catch (error) {
+    console.error('[queries:player-scores]', error instanceof Error ? error.message : error);
+    return [];
+  }
 }
 
 export async function getPlayerFavorites(userId: string): Promise<Game[]> {
-  const db = supabaseAnon();
-  const { data } = await db.from('favorites').select('game_id').eq('user_id', userId);
-  const ids = (data ?? []).map((row) => row.game_id as string);
-  if (!ids.length) return [];
-  const res = await db.from('games').select('*').in('id', ids);
-  return (res.data ?? []) as unknown as Game[];
+  try {
+    const db = supabaseAnon();
+    const { data, error } = await db.from('favorites').select('game_id').eq('user_id', userId);
+    if (error) {
+      console.error('[queries:player-favorites]', error.code, error.message);
+      return [];
+    }
+    const ids = (data ?? []).map((row) => row.game_id as string);
+    if (!ids.length) return [];
+    const games = await db.from('games').select('*').in('id', ids).eq('published', true);
+    if (games.error) console.error('[queries:favorite-games]', games.error.code, games.error.message);
+    return (games.data ?? []) as unknown as Game[];
+  } catch (error) {
+    console.error('[queries:player-favorites]', error instanceof Error ? error.message : error);
+    return [];
+  }
 }
