@@ -100,11 +100,11 @@ export function AdminShell({ admin, initial }: { admin: { username: string; role
   const openTickets = data.kpis.openTickets;
 
   return (
-    <div className="flex min-h-screen bg-[#05060a]">
+    <div className="dash-admin flex min-h-screen bg-[#080808]">
       {/* sidebar */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex w-[248px] flex-col border-r border-white/[0.07] bg-[#080a11]/97 backdrop-blur-xl transition-transform duration-300 lg:translate-x-0',
+          'fixed inset-y-0 left-0 z-50 flex w-[248px] flex-col border-r border-white/[0.07] bg-[#0b0b0b] transition-transform duration-300 lg:translate-x-0',
           navOpen ? 'translate-x-0' : '-translate-x-full',
         )}
       >
@@ -180,7 +180,7 @@ export function AdminShell({ admin, initial }: { admin: { username: string; role
 
       {/* main */}
       <div className="flex min-w-0 flex-1 flex-col lg:pl-[248px]">
-        <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-white/[0.07] bg-[#05060a]/85 px-4 py-3 backdrop-blur-xl sm:px-6">
+        <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-white/[0.1] bg-[#080808] px-4 py-3 sm:px-6">
           <button onClick={() => setNavOpen(true)} className="btn-ghost !px-2.5 !py-2 lg:hidden" aria-label="Open navigation">
             <IconMenu width={17} height={17} />
           </button>
