@@ -2,13 +2,14 @@ import type { Metadata } from 'next';
 import { LibraryExplorer } from '@/components/games/LibraryExplorer';
 import { getGames, getGenres, getLiveStats, getSiteSettings } from '@/lib/queries';
 import { IconBolt, IconCloud, IconGamepad } from '@/components/ui/Icons';
+import { PageHeader } from '@/components/ui/PageHeader';
 import { formatNumber } from '@/lib/utils';
 
 export const revalidate = 45;
 
 export const metadata: Metadata = {
   title: 'Game library',
-  description: 'Browse every title on Dash Cloud Gaming — instant-play browser engines and cloud-streamed AAA games, all with zero downloads.',
+  description: 'Browse the Dash catalogue, find a title by genre, and launch supported games directly in your browser.',
 };
 
 export default async function GamesPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
@@ -25,44 +26,32 @@ export default async function GamesPage({ searchParams }: { searchParams: Promis
     getSiteSettings(),
   ]);
 
-  const instant = games.filter((g) => g.play_mode === 'native').length;
+  const instant = games.filter((game) => game.play_mode === 'native').length;
+  const summary = (
+    <dl className="grid grid-cols-3 gap-4 rounded-xl border border-neutral-800 bg-neutral-950 px-4 py-3 sm:gap-6 sm:px-5">
+      <div>
+        <dt className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-neutral-500"><IconGamepad width={12} height={12} /> Titles</dt>
+        <dd className="mt-1 font-mono text-lg font-bold tabular-nums text-white">{settings.stats.gamesHosted}</dd>
+      </div>
+      <div>
+        <dt className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-neutral-500"><IconBolt width={12} height={12} /> Instant</dt>
+        <dd className="mt-1 font-mono text-lg font-bold tabular-nums text-white">{instant}</dd>
+      </div>
+      <div>
+        <dt className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-neutral-500"><IconCloud width={12} height={12} /> Playing</dt>
+        <dd className="mt-1 font-mono text-lg font-bold tabular-nums text-white">{formatNumber(live.playersOnline)}</dd>
+      </div>
+    </dl>
+  );
 
   return (
-    <div className="section py-10 lg:py-14">
-      <header className="mb-8">
-        <div className="flex flex-wrap items-end justify-between gap-6">
-          <div>
-            <span className="kicker">Catalogue</span>
-            <h1 className="h-display mt-2.5 text-[34px] leading-tight sm:text-[46px]">Game library</h1>
-            <p className="mt-3 max-w-2xl text-[14.5px] leading-relaxed text-[color:var(--text-dim)]">
-              {settings.stats.gamesHosted} titles hosted on {settings.site.name} cloud nodes. Instant-play engines launch
-              straight in your browser; cloud titles stream from a GPU node with your saves kept server-side.
-            </p>
-          </div>
-
-          <dl className="grid grid-cols-3 gap-x-6 gap-y-3 rounded-2xl border border-white/[0.07] bg-white/[0.022] px-5 py-4">
-            <div>
-              <dt className="flex items-center gap-1.5 text-[10.5px] uppercase tracking-[0.14em] text-[color:var(--text-faint)]">
-                <IconGamepad width={12} height={12} /> Titles
-              </dt>
-              <dd className="mt-1 font-mono text-[19px] font-bold tabular-nums text-white">{settings.stats.gamesHosted}</dd>
-            </div>
-            <div>
-              <dt className="flex items-center gap-1.5 text-[10.5px] uppercase tracking-[0.14em] text-[color:var(--text-faint)]">
-                <IconBolt width={12} height={12} /> Instant
-              </dt>
-              <dd className="mt-1 font-mono text-[19px] font-bold tabular-nums text-[#86efac]">{instant}</dd>
-            </div>
-            <div>
-              <dt className="flex items-center gap-1.5 text-[10.5px] uppercase tracking-[0.14em] text-[color:var(--text-faint)]">
-                <IconCloud width={12} height={12} /> Playing
-              </dt>
-              <dd className="mt-1 font-mono text-[19px] font-bold tabular-nums text-white">{formatNumber(live.playersOnline)}</dd>
-            </div>
-          </dl>
-        </div>
-      </header>
-
+    <div className="page-shell">
+      <PageHeader
+        eyebrow="Catalogue"
+        title="Find your next game."
+        description={`${settings.stats.gamesHosted} titles in the Dash catalogue. Search by name, narrow by genre, and jump straight into supported games.`}
+        action={summary}
+      />
       <LibraryExplorer initialGames={games} genres={genres} />
     </div>
   );
