@@ -1,51 +1,25 @@
-import { z } from 'zod';
+import { sessionEndSchema, sessionStartSchema, sessionStreamingSchema, type SessionEndInput, type SessionStartInput, type SessionStreamingInput } from '@/features/sessions/contracts';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { supabaseServer } from '@/lib/supabase/server';
 import { fail, json, readJson, withPublicRateLimit } from '@/lib/api';
 
 export const dynamic = 'force-dynamic';
 
-const startSchema = z.object({
-  slug: z.string().trim().min(1).max(80),
-  region: z.string().trim().max(40).optional(),
-  resolution: z.string().trim().max(20).optional(),
-  latencyMs: z.number().int().min(0).max(900).optional(),
-  guestId: z.string().trim().min(6).max(80).optional(),
-});
-
-const endSchema = z.object({
-  sessionId: z.string().uuid(),
-  guestId: z.string().trim().min(6).max(80).optional(),
-  durationSeconds: z.number().int().min(0).max(60 * 60 * 8),
-  status: z.enum(['ended', 'failed']).default('ended'),
-});
-
-const streamingSchema = z.object({
-  sessionId: z.string().uuid(),
-  guestId: z.string().trim().min(6).max(80).optional(),
-  latencyMs: z.number().int().min(0).max(900).optional(),
-  resolution: z.string().trim().max(20).optional(),
-  region: z.string().trim().max(40).optional(),
-});
-
-const rawSchema = z.record(z.unknown());
 const startLimit = withPublicRateLimit('session-start', 25, 60_000);
 const endLimit = withPublicRateLimit('session-end', 40, 60_000);
 const streamingLimit = withPublicRateLimit('session-streaming', 60, 60_000);
 
 export async function POST(req: Request) {
-  const rawResult = rawSchema.safeParse(await readJson(req));
-  if (!rawResult.success) return fail('Invalid session request', 400);
-  const raw = rawResult.data;
+  const raw = await readJson<Record<string, unknown>>(req);
 
   if (raw.sessionId && (raw.end === true || raw.durationSeconds !== undefined)) {
-    const parsed = endSchema.safeParse(raw);
+    const parsed = sessionEndSchema.safeParse(raw);
     if (!parsed.success) return fail('Invalid session end payload', 422);
     return endSession(req, parsed.data);
   }
 
   if (raw.sessionId && raw.streaming === true) {
-    const parsed = streamingSchema.safeParse(raw);
+    const parsed = sessionStreamingSchema.safeParse(raw);
     if (!parsed.success) return fail('Invalid session update payload', 422);
     return markStreaming(req, parsed.data);
   }
@@ -53,7 +27,7 @@ export async function POST(req: Request) {
   const rate = startLimit(req);
   if (!rate.ok) return fail('Too many sessions started. Please slow down.', 429, { retryAfter: rate.retryAfter });
 
-  const parsed = startSchema.safeParse(raw);
+  const parsed = sessionStartSchema.safeParse(raw);
   if (!parsed.success) {
     return fail('Invalid session start payload', 422, {
       issues: parsed.error.issues.map((issue) => ({ path: issue.path.join('.'), message: issue.message })),
@@ -109,7 +83,7 @@ export async function POST(req: Request) {
   return json({ session: data, playMode: game.play_mode, status: game.status }, { status: 201 });
 }
 
-async function markStreaming(req: Request, body: z.infer<typeof streamingSchema>) {
+async function markStreaming(req: Request, body: SessionStreamingInput) {
   const rate = streamingLimit(req);
   if (!rate.ok) return fail('Too many session updates', 429, { retryAfter: rate.retryAfter });
 
@@ -153,7 +127,7 @@ export async function PATCH(req: Request) {
   return endSession(req, parsed.data);
 }
 
-async function endSession(req: Request, body: z.infer<typeof endSchema>) {
+async function endSession(req: Request, body: SessionEndInput) {
   const rate = endLimit(req);
   if (!rate.ok) return fail('Too many session updates', 429, { retryAfter: rate.retryAfter });
 
