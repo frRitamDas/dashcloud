@@ -26,11 +26,12 @@ const defaultSettings: SiteSettings = {
 };
 
 const defaultStats: StatsSettings = {
-  totalPlayers: 1284500,
-  gamesHosted: 32,
-  countries: 74,
-  avgBootSeconds: 9,
-  uptimePercent: 99.98,
+  // Unknown metrics stay unknown; never show invented production statistics.
+  totalPlayers: 0,
+  gamesHosted: 0,
+  countries: 0,
+  avgBootSeconds: 0,
+  uptimePercent: 0,
 };
 
 export async function getSiteSettings(): Promise<{ site: SiteSettings; stats: StatsSettings; maintenance: { enabled: boolean; message: string }; streaming: Record<string, string> }> {
@@ -149,7 +150,7 @@ export async function getLiveStats(): Promise<LiveStats> {
       degraded: statuses.filter((s) => s.status !== 'operational').length,
     };
   } catch {
-    return { playersOnline: 0, activeSessions: 0, gamesLive: 0, avgLatency: 0, queueLength: 0, uptime: 100, degraded: 0 };
+    return { playersOnline: 0, activeSessions: 0, gamesLive: 0, avgLatency: 0, queueLength: 0, uptime: 0, degraded: 0 };
   }
 }
 
