@@ -10,13 +10,14 @@ import { IconArrowRight, IconCheck, IconLock, IconMail, IconShield, IconUser } f
 import { Spinner } from '@/components/ui/Skeleton';
 import { passwordStrength } from '@/lib/password-client';
 import { cn } from '@/lib/utils';
+import { safeInternalPath } from '@/lib/redirects';
 
 const perks = ['Unlimited instant-play engines', 'Cloud saves & XP on every device', 'Weekly global leaderboards', 'No card, no trial clock'];
 
 export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
   const router = useRouter();
   const params = useSearchParams();
-  const next = params.get('next') || '/profile';
+  const next = safeInternalPath(params.get('next'), '/profile');
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
