@@ -1,69 +1,17 @@
 import 'server-only';
-import { supabaseAnon } from '@/lib/supabase/anon';
-import { supabaseAdmin } from '@/lib/supabase/admin';
-import { findGameBySlug, listGameGenres, listPublishedGames } from '@/features/games/repository';
-import type {
-  Announcement,
-  Game,
-  LiveStats,
-  Profile,
-  ScoreRow,
-  ServiceStatus,
-  SiteSettings,
-  StatsSettings,
-} from '@/lib/supabase/types';
 
-export type GameSort = 'popular' | 'rating' | 'newest' | 'az';
+import { findGameBySlug, listGameGenres, listPublishedGames, type GameFilters, type GameSort } from '@/features/games/repository';
+import type { Game } from '@/lib/supabase/types';
 
-const defaultSettings: SiteSettings = {
-  name: 'Dash',
-  fullName: 'Dash Cloud Gaming',
-  tagline: 'Play anything. Anywhere. Instantly.',
-  description:
-    'Dash is a free cloud gaming service — stream premium titles straight into your browser with zero downloads, zero installs and zero waiting.',
-  supportEmail: 'support@dash.gg',
-  credits: 'Made by Ritam Das from India',
-};
+export type { GameSort } from '@/features/games/repository';
+export { getSiteSettings, getServiceStatus, getAnnouncements, getLiveStats } from '@/features/site/repository';
+export { getLeaderboard, getGlobalTopScores, getPlayerScores } from '@/features/scores/repository';
+export { getProfile, getPlayerFavorites } from '@/features/profiles/repository';
 
-const defaultStats: StatsSettings = {
-  // Unknown metrics stay unknown; never show invented production statistics.
-  totalPlayers: 0,
-  gamesHosted: 0,
-  countries: 0,
-  avgBootSeconds: 0,
-  uptimePercent: 0,
-};
-
-export async function getSiteSettings(): Promise<{ site: SiteSettings; stats: StatsSettings; maintenance: { enabled: boolean; message: string }; streaming: Record<string, string> }> {
+/** Compatibility facade while page modules migrate to feature imports. */
+export async function getGames(filters: GameFilters = {}): Promise<Game[]> {
   try {
-    const db = supabaseAnon();
-    const { data } = await db
-      .from('settings')
-      .select('key,value')
-      .in('key', ['site', 'stats', 'maintenance', 'streaming']);
-    const map = new Map((data ?? []).map((row) => [row.key as string, row.value as Record<string, unknown>]));
-    return {
-      site: { ...defaultSettings, ...((map.get('site') ?? {}) as Partial<SiteSettings>) },
-      stats: { ...defaultStats, ...((map.get('stats') ?? {}) as Partial<StatsSettings>) },
-      maintenance: (map.get('maintenance') as { enabled: boolean; message: string }) ?? { enabled: false, message: '' },
-      streaming: (map.get('streaming') as Record<string, string>) ?? {},
-    };
-  } catch {
-    return { site: defaultSettings, stats: defaultStats, maintenance: { enabled: false, message: '' }, streaming: {} };
-  }
-}
-
-export async function getGames(opts: {
-  genre?: string;
-  search?: string;
-  sort?: GameSort;
-  playMode?: 'native' | 'cloud';
-  status?: Game['status'];
-  featuredOnly?: boolean;
-  limit?: number;
-} = {}): Promise<Game[]> {
-  try {
-    return await listPublishedGames(opts);
+    return await listPublishedGames(filters);
   } catch {
     return [];
   }
@@ -81,142 +29,6 @@ export async function getGenres(): Promise<string[]> {
   try {
     return await listGameGenres();
   } catch {
-    return [];
-  }
-}
-
-export async function getServiceStatus(): Promise<ServiceStatus[]> {
-  try {
-    const { data, error } = await supabaseAnon().from('service_status').select('*').order('sort_order', { ascending: true });
-    if (error) console.error('[queries:service-status]', error.code, error.message);
-    return (data ?? []) as unknown as ServiceStatus[];
-  } catch (error) {
-    console.error('[queries:service-status]', error instanceof Error ? error.message : error);
-    return [];
-  }
-}
-
-export async function getAnnouncements(): Promise<Announcement[]> {
-  try {
-    const { data, error } = await supabaseAnon().from('announcements').select('*').eq('active', true).order('created_at', { ascending: false }).limit(5);
-    if (error) console.error('[queries:announcements]', error.code, error.message);
-    return (data ?? []) as unknown as Announcement[];
-  } catch (error) {
-    console.error('[queries:announcements]', error instanceof Error ? error.message : error);
-    return [];
-  }
-}
-
-export async function getLeaderboard(slug: string, limit = 25): Promise<ScoreRow[]> {
-  try {
-    const db = supabaseAnon();
-    const game = await getGameBySlug(slug);
-    if (!game) return [];
-    const { data, error } = await db
-      .from('scores')
-      .select('id,user_id,guest_name,game_id,score,metric,payload,created_at,profiles(username,display_name,avatar_url,level)')
-      .eq('game_id', game.id)
-      .order('score', { ascending: false })
-      .order('created_at', { ascending: false })
-      .limit(Math.max(1, Math.min(100, Math.trunc(limit))));
-    if (error) console.error('[queries:leaderboard]', error.code, error.message);
-    return (data ?? []) as unknown as ScoreRow[];
-  } catch (error) {
-    console.error('[queries:leaderboard]', error instanceof Error ? error.message : error);
-    return [];
-  }
-}
-
-export async function getGlobalTopScores(limit = 12): Promise<ScoreRow[]> {
-  try {
-    const { data, error } = await supabaseAnon()
-      .from('scores')
-      .select('id,user_id,guest_name,game_id,score,metric,created_at,profiles(username,display_name,avatar_url,level),games(slug,title,accent)')
-      .order('score', { ascending: false })
-      .order('created_at', { ascending: false })
-      .limit(Math.max(1, Math.min(50, Math.trunc(limit))));
-    if (error) console.error('[queries:global-scores]', error.code, error.message);
-    return (data ?? []) as unknown as ScoreRow[];
-  } catch (error) {
-    console.error('[queries:global-scores]', error instanceof Error ? error.message : error);
-    return [];
-  }
-}
-
-export async function getLiveStats(): Promise<LiveStats> {
-  try {
-    const db = supabaseAdmin();
-    const since = new Date(Date.now() - 1000 * 60 * 15).toISOString();
-
-    const [gamesRes, activeRes, statusRes, totalsRes] = await Promise.all([
-      db.from('games').select('players_online,status').eq('published', true),
-      db.from('game_sessions').select('id').eq('status', 'streaming').gte('started_at', since),
-      db.from('service_status').select('status,latency_ms'),
-      db.from('games').select('id', { count: 'exact', head: true }).eq('published', true).eq('status', 'live'),
-    ]);
-
-    const games = (gamesRes.data ?? []) as unknown as { players_online: number; status: string }[];
-    const statuses = (statusRes.data ?? []) as unknown as { status: string; latency_ms: number }[];
-    const playersOnline = games.reduce((sum, g) => sum + (g.players_online || 0), 0);
-    const latencies = statuses.map((s) => s.latency_ms || 0).filter((v) => v > 0);
-    const avgLatency = latencies.length ? Math.round(latencies.reduce((a, b) => a + b, 0) / latencies.length) : 0;
-
-    return {
-      playersOnline,
-      activeSessions: (activeRes.data ?? []).length,
-      gamesLive: totalsRes.count ?? games.filter((g) => g.status === 'live').length,
-      avgLatency,
-      queueLength: Math.max(0, Math.round(playersOnline / 340)),
-      uptime: statuses.length ? Math.round((statuses.filter((s) => s.status === 'operational').length / statuses.length) * 10000) / 100 : 0,
-      degraded: statuses.filter((s) => s.status !== 'operational').length,
-    };
-  } catch {
-    return { playersOnline: 0, activeSessions: 0, gamesLive: 0, avgLatency: 0, queueLength: 0, uptime: 0, degraded: 0 };
-  }
-}
-
-export async function getProfile(id: string): Promise<Profile | null> {
-  try {
-    const { data, error } = await supabaseAnon().from('profiles').select('*').eq('id', id).maybeSingle();
-    if (error) console.error('[queries:profile]', error.code, error.message);
-    return (data as unknown as Profile) ?? null;
-  } catch (error) {
-    console.error('[queries:profile]', error instanceof Error ? error.message : error);
-    return null;
-  }
-}
-
-export async function getPlayerScores(userId: string, limit = 40): Promise<ScoreRow[]> {
-  try {
-    const { data, error } = await supabaseAnon()
-      .from('scores')
-      .select('id,score,metric,created_at,game_id,payload,games(slug,title,accent)')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-      .limit(Math.max(1, Math.min(100, Math.trunc(limit))));
-    if (error) console.error('[queries:player-scores]', error.code, error.message);
-    return (data ?? []) as unknown as ScoreRow[];
-  } catch (error) {
-    console.error('[queries:player-scores]', error instanceof Error ? error.message : error);
-    return [];
-  }
-}
-
-export async function getPlayerFavorites(userId: string): Promise<Game[]> {
-  try {
-    const db = supabaseAnon();
-    const { data, error } = await db.from('favorites').select('game_id').eq('user_id', userId);
-    if (error) {
-      console.error('[queries:player-favorites]', error.code, error.message);
-      return [];
-    }
-    const ids = (data ?? []).map((row) => row.game_id as string);
-    if (!ids.length) return [];
-    const games = await db.from('games').select('*').in('id', ids).eq('published', true);
-    if (games.error) console.error('[queries:favorite-games]', games.error.code, games.error.message);
-    return (games.data ?? []) as unknown as Game[];
-  } catch (error) {
-    console.error('[queries:player-favorites]', error instanceof Error ? error.message : error);
     return [];
   }
 }
