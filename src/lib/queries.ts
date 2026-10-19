@@ -167,7 +167,7 @@ export async function getLiveStats(): Promise<LiveStats> {
       gamesLive: totalsRes.count ?? games.filter((g) => g.status === 'live').length,
       avgLatency,
       queueLength: Math.max(0, Math.round(playersOnline / 340)),
-      uptime: statuses.length ? Math.round((statuses.filter((s) => s.status === 'operational').length / statuses.length) * 10000) / 100 : 100,
+      uptime: statuses.length ? Math.round((statuses.filter((s) => s.status === 'operational').length / statuses.length) * 10000) / 100 : 0,
       degraded: statuses.filter((s) => s.status !== 'operational').length,
     };
   } catch {
