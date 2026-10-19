@@ -30,7 +30,6 @@ const nextConfig = {
   experimental: {
     optimizePackageImports: ['framer-motion', 'three'],
   },
-  eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: false },
   async headers() {
     return [
