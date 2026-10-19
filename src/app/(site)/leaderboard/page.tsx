@@ -5,6 +5,7 @@ import { getGames, getLeaderboard, getGlobalTopScores, getSiteSettings } from '@
 import { Reveal } from '@/components/ui/Reveal';
 import { GameRow } from '@/components/games/GameRowList';
 import { IconArrowRight, IconBolt, IconTrophy } from '@/components/ui/Icons';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 export const revalidate = 30;
 
@@ -22,15 +23,12 @@ export default async function LeaderboardPage() {
   }
 
   return (
-    <div className="section py-10 lg:py-14">
-      <header className="mb-9">
-        <span className="kicker">Competitive</span>
-        <h1 className="h-display mt-2.5 text-[34px] leading-tight sm:text-[46px]">Leaderboards</h1>
-        <p className="mt-3 max-w-2xl text-[14.5px] leading-relaxed text-[color:var(--text-dim)]">
-          Every finished run is written to Postgres and pushed to these boards in real time through Supabase realtime —
-          watch entries land while you play. Boards reset every Monday at 00:00 IST.
-        </p>
-      </header>
+    <div className="page-shell">
+      <PageHeader
+        eyebrow="Competition"
+        title="The leaderboard."
+        description="Compare verified game runs and see who's setting the pace. Choose a game below to explore its top scores."
+      />
 
       <LeaderboardClient games={games} initial={boards} />
 
