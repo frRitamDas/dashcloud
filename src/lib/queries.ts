@@ -1,6 +1,7 @@
 import 'server-only';
 import { supabaseAnon } from '@/lib/supabase/anon';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { findGameBySlug, listGameGenres, listPublishedGames } from '@/features/games/repository';
 import type {
   Announcement,
   Game,
@@ -60,49 +61,15 @@ export async function getGames(opts: {
   featuredOnly?: boolean;
   limit?: number;
 } = {}): Promise<Game[]> {
-  const db = supabaseAnon();
-  let query = db.from('games').select('*').eq('published', true);
-
-  if (opts.genre && opts.genre !== 'all') query = query.eq('genre', opts.genre);
-  if (opts.playMode) query = query.eq('play_mode', opts.playMode);
-  if (opts.status) query = query.eq('status', opts.status);
-  if (opts.featuredOnly) query = query.eq('featured', true);
-  if (opts.search) {
-    const term = opts.search.replace(/[%_,()]/g, ' ').trim();
-    if (term) query = query.or(`title.ilike.%${term}%,tagline.ilike.%${term}%,genre.ilike.%${term}%`);
-  }
-
-  switch (opts.sort) {
-    case 'rating':
-      query = query.order('rating', { ascending: false });
-      break;
-    case 'newest':
-      query = query.order('release_year', { ascending: false }).order('created_at', { ascending: false });
-      break;
-    case 'az':
-      query = query.order('title', { ascending: true });
-      break;
-    case 'popular':
-    default:
-      query = query.order('sort_order', { ascending: true }).order('players_online', { ascending: false });
-      break;
-  }
-
-  query = query.limit(opts.limit ?? 60);
-  const { data } = await query;
-  return (data ?? []) as unknown as Game[];
+  return listPublishedGames(opts);
 }
 
 export async function getGameBySlug(slug: string): Promise<Game | null> {
-  const db = supabaseAnon();
-  const { data } = await db.from('games').select('*').eq('slug', slug).maybeSingle();
-  return (data as unknown as Game) ?? null;
+  return findGameBySlug(slug);
 }
 
 export async function getGenres(): Promise<string[]> {
-  const games = await getGames({ limit: 200 });
-  const set = new Set(games.map((g) => g.genre));
-  return Array.from(set).sort();
+  return listGameGenres();
 }
 
 export async function getServiceStatus(): Promise<ServiceStatus[]> {
