@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { Reveal } from '@/components/ui/Reveal';
-import { cn } from '@/lib/utils';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 export type LegalSection = { heading: string; body: ReactNode };
 
@@ -19,13 +19,14 @@ export function LegalLayout({
   tocId: string;
 }) {
   return (
-    <div className="section py-10 lg:py-14">
-      <header className="max-w-2xl">
-        <span className="kicker">Legal</span>
-        <h1 className="h-display mt-2.5 text-[32px] leading-tight sm:text-[44px]">{title}</h1>
-        <p className="mt-3 text-[14px] leading-relaxed text-[color:var(--text-dim)]">{intro}</p>
-        <p className="mt-4 text-[12px] text-[color:var(--text-faint)]">Last updated {updated}</p>
-      </header>
+    <div className="page-shell">
+      <PageHeader
+        eyebrow="Legal"
+        title={title}
+        description={intro}
+        className="!mb-0"
+      />
+      <p className="mt-4 text-[12px] text-neutral-500">Last updated {updated}</p>
 
       <div className="mt-10 grid gap-10 lg:grid-cols-[220px_minmax(0,1fr)]">
         <nav className="hidden lg:block">
@@ -35,7 +36,7 @@ export function LegalLayout({
               <a
                 key={s.heading}
                 href={`#${tocId}-${i}`}
-                className={cn('block rounded-lg px-3 py-2 text-[12.5px] leading-snug text-[color:var(--text-dim)] transition-colors hover:bg-white/[0.04] hover:text-white')}
+                className="block rounded-lg px-3 py-2 text-[12.5px] leading-snug text-neutral-400 transition-colors hover:bg-neutral-900 hover:text-white"
               >
                 <span className="mr-2 font-mono text-[11px] text-white/25">{String(i + 1).padStart(2, '0')}</span>
                 {s.heading}
