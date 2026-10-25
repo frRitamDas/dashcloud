@@ -1,6 +1,5 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
@@ -16,7 +15,6 @@ export function AdminLogin() {
   const [show, setShow] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [shake, setShake] = useState(0);
   const userRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -25,105 +23,64 @@ export function AdminLogin() {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (busy) return;
     setBusy(true);
     setError(null);
     try {
-      await adminApi<{ ok: boolean }>('/api/admin/login', { method: 'POST', body: { username, password } });
+      await adminApi<{ ok: boolean }>('/api/admin/login', { method: 'POST', body: { username: username.trim(), password } });
       router.push('/admin');
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed.');
-      setShake((s) => s + 1);
+      setError(err instanceof Error ? err.message : 'Sign-in failed. Check your details and try again.');
       setBusy(false);
     }
   }
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center px-4 py-12">
-      <div className="pointer-events-none absolute left-1/2 top-0 h-[420px] w-[720px] -translate-x-1/2 rounded-full bg-brand-500/16 blur-[110px]" />
-      <div className="grid-bg pointer-events-none absolute inset-0 opacity-[0.45]" />
+    <main className="flex min-h-screen items-center justify-center bg-[#080808] px-4 py-12">
+      <div className="w-full max-w-[420px]">
+        <div className="mb-8 flex items-center gap-3">
+          <LogoMark size={34} />
+          <div><p className="text-sm font-bold text-white">Dash Cloud</p><p className="mt-0.5 text-xs text-neutral-500">Administration</p></div>
+        </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-        className="relative w-full max-w-[400px]"
-      >
-        <div className="panel rounded-2xl p-7">
-          <div className="flex items-center gap-3">
-            <LogoMark size={34} />
-            <div>
-              <p className="text-[14px] font-bold tracking-tight text-white">Dash Control Plane</p>
-              <p className="text-[11px] text-[color:var(--text-faint)]">Operators only</p>
-            </div>
-          </div>
+        <section className="border border-white/15 bg-[#0b0b0b] p-6 sm:p-8">
+          <p className="text-[10px] font-bold uppercase tracking-[.18em] text-neutral-500">Restricted access</p>
+          <h1 className="mt-3 text-2xl font-bold tracking-[-.045em] text-white">Sign in to the console</h1>
+          <p className="mt-2 text-sm leading-6 text-neutral-500">This area is for authorized Dash Cloud operators.</p>
 
-          <motion.form key={shake} onSubmit={submit} className="mt-7 space-y-4" animate={shake ? { x: [0, -7, 6, -4, 0] } : {}} transition={{ duration: 0.34 }}>
+          <form onSubmit={submit} className="mt-7 space-y-5">
             <div>
               <label className="label" htmlFor="a-user">Username</label>
               <div className="relative">
-                <IconUser width={15} height={15} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[color:var(--text-faint)]" />
-                <input
-                  id="a-user"
-                  ref={userRef}
-                  className="input !pl-10"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  autoComplete="username"
-                  required
-                  maxLength={40}
-                  placeholder="admin"
-                />
+                <IconUser width={15} height={15} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-500" />
+                <input id="a-user" ref={userRef} className="input !pl-10" value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="username" required maxLength={40} placeholder="Username" />
               </div>
             </div>
-
             <div>
               <label className="label" htmlFor="a-pass">Password</label>
               <div className="relative">
-                <IconLock width={15} height={15} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[color:var(--text-faint)]" />
-                <input
-                  id="a-pass"
-                  type={show ? 'text' : 'password'}
-                  className="input !pl-10 !pr-11"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  autoComplete="current-password"
-                  required
-                  maxLength={200}
-                  placeholder="••••••••"
-                />
-                <button type="button" onClick={() => setShow((v) => !v)} aria-label={show ? 'Hide password' : 'Show password'} className="absolute right-3 top-1/2 -translate-y-1/2 text-[color:var(--text-faint)] transition-colors hover:text-white">
-                  <IconEye width={16} height={16} />
-                </button>
+                <IconLock width={15} height={15} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-500" />
+                <input id="a-pass" type={show ? 'text' : 'password'} className="input !pl-10 !pr-11" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" required maxLength={200} placeholder="Password" />
+                <button type="button" onClick={() => setShow((value) => !value)} aria-label={show ? 'Hide password' : 'Show password'} className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 transition-colors hover:text-white"><IconEye width={16} height={16} /></button>
               </div>
             </div>
 
-            {error && (
-              <motion.p initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-[rgba(251,113,133,0.28)] bg-[rgba(251,113,133,0.09)] px-3.5 py-2.5 text-[12.5px] leading-relaxed text-[#ffc9d1]">
-                {error}
-              </motion.p>
-            )}
+            {error && <p role="alert" className="border border-white/20 bg-white/[0.04] px-3.5 py-3 text-sm leading-6 text-neutral-200">{error}</p>}
 
-            <button type="submit" disabled={busy} className="btn-primary w-full !py-3 !text-[14px]">
-              {busy && <Spinner size={15} />}
-              {busy ? 'Verifying…' : 'Sign in to console'}
-              {!busy && <IconKey width={15} height={15} />}
+            <button type="submit" disabled={busy || !username.trim() || !password} className="btn-primary w-full !py-3 !text-sm">
+              {busy ? <><Spinner size={15} /> Verifying credentials…</> : <>Sign in <IconKey width={15} height={15} /></>}
             </button>
-          </motion.form>
+          </form>
 
-          <div className="mt-6 flex items-start gap-2.5 rounded-xl border border-white/[0.07] bg-white/[0.022] px-3.5 py-3">
-            <IconShield width={15} height={15} className="mt-[1px] shrink-0 text-neon-mint" />
-            <p className="text-[11.5px] leading-relaxed text-[color:var(--text-faint)]">
-              Sessions are signed, httpOnly and expire after 8 hours. Five failed attempts lock the account for 15
-              minutes, and every attempt is written to the audit log.
-            </p>
+          <div className="mt-6 flex items-start gap-3 border-t border-white/10 pt-5">
+            <IconShield width={16} height={16} className="mt-0.5 shrink-0 text-neutral-400" />
+            <p className="text-xs leading-5 text-neutral-500">Admin sessions use signed, HTTP-only cookies and expire automatically. Sign-in attempts are rate-limited and recorded for review.</p>
           </div>
-        </div>
+        </section>
 
-        <p className="mt-4 text-center text-[11.5px] text-[color:var(--text-faint)]">
-          Not an operator? <Link href="/" className="underline decoration-white/25 underline-offset-2 hover:text-white">Back to Dash</Link>
-        </p>
-      </motion.div>
-    </div>
+        <p className="mt-5 text-center text-xs text-neutral-600">Not an operator? <Link href="/" className="text-neutral-300 underline decoration-neutral-700 underline-offset-4 hover:text-white">Return to the public site</Link></p>
+      </div>
+    </main>
   );
 }
