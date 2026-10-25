@@ -164,7 +164,7 @@ export function AdminShell({ admin, initial }: { admin: { username: string; role
                           active ? 'border-white bg-white text-black' : 'border-transparent text-neutral-400 hover:bg-white/[0.05] hover:text-white',
                         )}
                       >
-                        <span className={cn(active ? 'text-white' : 'text-neutral-500 group-hover:text-neutral-200')}>{t.icon}</span>
+                        <span className={cn(active ? 'text-black' : 'text-neutral-500 group-hover:text-neutral-200')}>{t.icon}</span>
                         <span className="flex-1 text-left">{t.label}</span>
                         {t.id === 'tickets' && openTickets > 0 && (
                           <span className="rounded-md bg-[rgba(251,113,133,0.16)] px-1.5 py-0.5 font-mono text-[10.5px] font-bold text-[#fda4af]">{openTickets}</span>
