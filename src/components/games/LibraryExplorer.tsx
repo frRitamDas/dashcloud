@@ -1,6 +1,6 @@
 'use client';
 
-import { AnimatePresence, motion } from 'framer-motion';
+import { useRef } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { Game } from '@/lib/supabase/types';
@@ -25,6 +25,8 @@ export function LibraryExplorer({ initialGames, genres }: { initialGames: Game[]
   );
   const [sort, setSort] = useState<Sort>((params.get('sort') as Sort) ?? 'popular');
   const [showFilters, setShowFilters] = useState(false);
+  const [requestError, setRequestError] = useState<string | null>(null);
+  const controllerRef = useRef<AbortController | null>(null);
 
   const query = useMemo(
     () => ({
@@ -37,7 +39,11 @@ export function LibraryExplorer({ initialGames, genres }: { initialGames: Game[]
   );
 
   const fetchGames = useCallback(async () => {
+    controllerRef.current?.abort();
+    const controller = new AbortController();
+    controllerRef.current = controller;
     setLoading(true);
+    setRequestError(null);
     const sp = new URLSearchParams();
     if (query.q) sp.set('q', query.q);
     if (query.genre) sp.set('genre', query.genre);
@@ -45,15 +51,23 @@ export function LibraryExplorer({ initialGames, genres }: { initialGames: Game[]
     sp.set('sort', query.sort);
     sp.set('limit', '60');
     try {
-      const res = await fetch(`/api/games?${sp.toString()}`);
-      const data = (await res.json()) as { games: Game[] };
-      setGames(data.games ?? []);
-    } catch {
-      /* keep the previous list on a network error */
+      const res = await fetch(`/api/games?${sp.toString()}`, { signal: controller.signal, cache: 'no-store' });
+      const data = (await res.json().catch(() => null)) as { games?: Game[]; error?: string } | null;
+      if (!res.ok) throw new Error(data?.error || 'Could not load games. Please try again.');
+      if (!data || !Array.isArray(data.games)) throw new Error('The game list returned an unexpected response.');
+      setGames(data.games);
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') return;
+      setRequestError(error instanceof Error ? error.message : 'Could not load games. Please try again.');
     } finally {
-      setLoading(false);
+      if (controllerRef.current === controller) {
+        controllerRef.current = null;
+        setLoading(false);
+      }
     }
   }, [query]);
+
+  useEffect(() => () => controllerRef.current?.abort(), []);
 
   useEffect(() => {
     const id = setTimeout(fetchGames, search ? 220 : 0);
@@ -95,7 +109,7 @@ export function LibraryExplorer({ initialGames, genres }: { initialGames: Game[]
   return (
     <div>
       {/* ---------- control bar ---------- */}
-      <div className="sticky top-[64px] z-30 -mx-5 mb-7 border-b border-white/[0.06] bg-[rgba(6,7,12,0.82)] px-5 py-3 backdrop-blur-xl sm:-mx-8 sm:px-8">
+      <div className="sticky top-[64px] z-30 -mx-5 mb-7 border-b border-white/10 bg-[#080808] px-5 py-3 sm:-mx-8 sm:px-8">
         <div className="flex flex-wrap items-center gap-2.5">
           <div className="relative min-w-[190px] flex-1">
             <IconSearch width={15} height={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[color:var(--text-faint)]" />
@@ -121,14 +135,14 @@ export function LibraryExplorer({ initialGames, genres }: { initialGames: Game[]
             <IconFilter width={15} height={15} /> Filters
           </button>
 
-          <div className="hidden items-center gap-1 rounded-xl border border-white/[0.07] bg-white/[0.025] p-1 lg:flex">
+          <div className="hidden items-center gap-1 border border-white/10 p-1 lg:flex">
             {(['all', 'native', 'cloud'] as const).map((m) => (
               <button
                 key={m}
                 onClick={() => setMode(m)}
                 className={cn(
-                  'rounded-lg px-3 py-1.5 text-[12.5px] font-semibold transition-colors',
-                  mode === m ? 'bg-white/[0.09] text-white' : 'text-[color:var(--text-faint)] hover:text-white/80',
+                  'px-3 py-1.5 text-[12.5px] font-semibold transition-colors',
+                  mode === m ? 'bg-white text-black' : 'text-neutral-400 hover:text-white',
                 )}
               >
                 {m === 'all' ? 'All' : m === 'native' ? 'Instant play' : 'Cloud stream'}
@@ -144,14 +158,8 @@ export function LibraryExplorer({ initialGames, genres }: { initialGames: Game[]
           </select>
         </div>
 
-        <AnimatePresence initial={false}>
-          {showFilters && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="overflow-hidden lg:hidden"
-            >
+        {showFilters && (
+            <div className="lg:hidden">
               <div className="flex flex-wrap gap-1.5 pt-3">
                 {(['all', 'native', 'cloud'] as const).map((m) => (
                   <button
@@ -166,9 +174,8 @@ export function LibraryExplorer({ initialGames, genres }: { initialGames: Game[]
                   </button>
                 ))}
               </div>
-            </motion.div>
+            </div>
           )}
-        </AnimatePresence>
 
         <div className="no-scrollbar mt-2.5 hidden gap-1.5 overflow-x-auto lg:flex">
           <FilterChip active={genre === 'all'} onClick={() => setGenre('all')} label="All genres" />
@@ -207,6 +214,13 @@ export function LibraryExplorer({ initialGames, genres }: { initialGames: Game[]
           ))}
         </div>
       </div>
+
+      {requestError && (
+        <div role="alert" className="mb-5 flex flex-col gap-3 border border-white/15 bg-white/[0.03] p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div><p className="text-sm font-bold text-white">Could not update the library</p><p className="mt-1 text-sm text-neutral-400">{requestError}</p></div>
+          <button type="button" onClick={() => void fetchGames()} className="btn-outline shrink-0">Try again</button>
+        </div>
+      )}
 
       {/* ---------- results ---------- */}
       <div className="mb-4 flex items-center justify-between gap-3">
