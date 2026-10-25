@@ -1,8 +1,7 @@
 'use client';
 
-import { useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { Game } from '@/lib/supabase/types';
 import { GameCard } from './GameCard';
 import { IconClose, IconFilter, IconSearch } from '@/components/ui/Icons';
@@ -23,7 +22,8 @@ export function LibraryExplorer({ initialGames, genres }: { initialGames: Game[]
   const [mode, setMode] = useState<'all' | 'native' | 'cloud'>(
     params.get('mode') === 'native' ? 'native' : params.get('mode') === 'cloud' ? 'cloud' : 'all',
   );
-  const [sort, setSort] = useState<Sort>((params.get('sort') as Sort) ?? 'popular');
+  const initialSort = params.get('sort');
+  const [sort, setSort] = useState<Sort>(initialSort === 'rating' || initialSort === 'newest' || initialSort === 'az' ? initialSort : 'popular');
   const [showFilters, setShowFilters] = useState(false);
   const [requestError, setRequestError] = useState<string | null>(null);
   const controllerRef = useRef<AbortController | null>(null);
@@ -280,8 +280,8 @@ function FilterChip({ active, onClick, label }: { active: boolean; onClick: () =
     <button
       onClick={onClick}
       className={cn(
-        'shrink-0 rounded-full border px-3 py-1.5 text-[12px] font-medium capitalize transition-colors',
-        active ? 'border-[rgba(109,92,255,0.5)] bg-[rgba(109,92,255,0.16)] text-white' : 'border-white/[0.08] bg-white/[0.03] text-[color:var(--text-faint)] hover:border-white/20 hover:text-white/85',
+        'shrink-0 border px-3 py-1.5 text-[12px] font-medium capitalize transition-colors',
+        active ? 'border-white bg-white text-black' : 'border-white/10 bg-transparent text-neutral-400 hover:border-white/30 hover:text-white',
       )}
     >
       {label}
