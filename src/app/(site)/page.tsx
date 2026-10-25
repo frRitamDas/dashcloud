@@ -77,7 +77,7 @@ export default async function HomePage() {
                 <span>01 / {String(collection.length).padStart(2, '0')}</span>
               </div>
               <div className="relative aspect-[4/4.2] overflow-hidden border border-white/15 bg-[#111] sm:aspect-[4/3.7]">
-                <GameArt slug={spotlight.slug} title={spotlight.title} genre={spotlight.genre} accent="#777777" coverUrl={spotlight.cover_url} rounded={false} />
+                <GameArt slug={spotlight.slug} title={spotlight.title} genre={spotlight.genre} accent="#777777" coverUrl={spotlight.cover_url} rounded={false} priority />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/10 to-transparent" />
                 <div className="absolute inset-x-0 bottom-0 p-5 sm:p-7">
                   <p className="text-[10px] font-bold uppercase tracking-[.18em] text-neutral-300">{spotlight.genre}</p>
