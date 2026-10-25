@@ -2,7 +2,7 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { getSiteSettings } from '@/lib/queries';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 45;
 
 export default async function SiteLayout({ children }: { children: React.ReactNode }) {
   const { site, maintenance } = await getSiteSettings();
