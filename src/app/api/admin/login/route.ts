@@ -3,7 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 import { issueAdminSession } from '@/lib/admin-session';
 import { verifyPassword } from '@/lib/password';
 import { clientIp, rateLimit } from '@/lib/rate-limit';
-import { fail, json, logActivity, readJson } from '@/lib/api';
+import { fail, handleApiError, json, logActivity, readJson } from '@/lib/api';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,6 +16,7 @@ const MAX_ATTEMPTS = 5;
 const LOCK_MINUTES = 15;
 
 export async function POST(req: Request) {
+  try {
   const ip = clientIp(req);
   const rl = rateLimit(`admin-login:${ip}`, 6, 10 * 60_000, 15 * 60_000);
   if (!rl.ok) {
@@ -80,4 +81,7 @@ export async function POST(req: Request) {
     ok: true,
     admin: { id: admin.id, username: admin.username, role: admin.role, lastLoginAt: admin.last_login_at },
   });
+  } catch (error) {
+    return handleApiError(error);
+  }
 }
