@@ -22,8 +22,9 @@ const utilityLinks = [
 ];
 
 function isActive(pathname: string, href: string) {
-  const path = href.split('?')[0];
-  return pathname === path || pathname.startsWith(path + '/');
+  // Query shortcuts such as Instant play are actions, not separate route tabs.
+  if (href.includes('?')) return false;
+  return pathname === href || pathname.startsWith(href + '/');
 }
 
 export function Navbar() {
