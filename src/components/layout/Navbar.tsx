@@ -48,8 +48,8 @@ export function Navbar() {
 
   return (
     <>
-      <header className="fixed inset-x-0 top-0 z-[80] border-b border-white/10 bg-[#080808]/95">
-        <nav className="section flex h-[68px] items-center justify-between gap-4" aria-label="Main navigation">
+      <header className="fixed inset-x-0 top-0 z-[80] border-b border-white/10 bg-[#080808]/80 backdrop-blur-xl supports-[backdrop-filter]:bg-[#080808]/70">
+        <nav className="section flex h-[64px] items-center justify-between gap-4" aria-label="Main navigation">
           <div className="flex min-w-0 items-center gap-9">
             <Link href="/" className="shrink-0" aria-label="Dash home">
               <span className="sm:hidden"><LogoMark size={32} /></span>
