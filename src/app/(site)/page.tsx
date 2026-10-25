@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { GameArt } from '@/components/art/GameArt';
 import { IconArrowRight, IconPlay } from '@/components/ui/Icons';
-import { getGames, getLiveStats, getServiceStatus, getSiteSettings } from '@/lib/queries';
+import { getGames, getLiveStats, getServiceStatus } from '@/lib/queries';
 import { formatNumber } from '@/lib/utils';
 
 export const revalidate = 45;
@@ -14,8 +14,7 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  const [settings, games, live, statuses] = await Promise.all([
-    getSiteSettings(),
+  const [games, live, statuses] = await Promise.all([
     getGames({ limit: 60 }),
     getLiveStats(),
     getServiceStatus(),
