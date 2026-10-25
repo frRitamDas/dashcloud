@@ -48,11 +48,11 @@ export function Footer({ site }: { site: SiteSettings }) {
             <div className="mt-6 flex flex-col gap-2.5">
               <span className="inline-flex w-fit items-center gap-2 rounded-full border border-white/[0.09] bg-white/[0.035] px-3 py-1.5 text-[11.5px] font-medium text-[color:var(--text-dim)]">
                 <IconShield width={14} height={14} className="text-neon-mint" />
-                Hardened with RLS, CSP & signed admin sessions
+                Security-minded · Row-level access controls
               </span>
               <span className="inline-flex w-fit items-center gap-2 rounded-full border border-white/[0.09] bg-white/[0.035] px-3 py-1.5 text-[11.5px] font-medium text-[color:var(--text-dim)]">
                 <IconIndia width={14} height={14} className="text-neon-cyan" />
-                Built in India · Mumbai edge node live
+                Built in India · Designed for the browser
               </span>
             </div>
 
