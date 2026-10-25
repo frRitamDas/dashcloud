@@ -22,10 +22,24 @@ export async function POST(req: Request) {
     return fail(`Too many login attempts. Try again in ${Math.ceil(rl.retryAfter / 60)} minute(s).`, 429, { retryAfter: rl.retryAfter });
   }
 
-  const body = schema.parse(await readJson(req));
-  const db = supabaseAdmin();
+  const parsed = schema.safeParse(await readJson(req));
+  if (!parsed.success) {
+    return fail('Please enter a valid username and password.', 422, {
+      issues: parsed.error.issues.map((issue) => ({ path: issue.path.join('.'), message: issue.message })),
+    });
+  }
+  if (!process.env.ADMIN_SESSION_SECRET || process.env.ADMIN_SESSION_SECRET.length < 32) {
+    console.error('[admin-login] ADMIN_SESSION_SECRET is missing or too short.');
+    return fail('Admin sign-in is temporarily unavailable because secure session signing is not configured.', 503);
+  }
 
-  const { data: admin } = await db.from('admins').select('*').eq('username', body.username).maybeSingle();
+  const body = parsed.data;
+  const db = supabaseAdmin();
+  const { data: admin, error: lookupError } = await db.from('admins').select('*').eq('username', body.username).maybeSingle();
+  if (lookupError) {
+    console.error('[admin-login] Admin lookup failed:', lookupError.code);
+    return fail('Admin sign-in is temporarily unavailable. Please try again.', 503);
+  }
 
   const generic = 'Invalid username or password.';
   if (!admin) {
