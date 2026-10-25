@@ -1,6 +1,5 @@
 'use client';
 
-import { AnimatePresence, motion } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import { adminApi } from './api';
@@ -36,15 +35,15 @@ import { cn } from '@/lib/utils';
 type TabId = 'overview' | 'live' | 'games' | 'users' | 'sessions' | 'scores' | 'tickets' | 'activity' | 'settings';
 
 const tabs: { id: TabId; label: string; icon: React.ReactNode; group: string }[] = [
-  { id: 'overview', label: 'Overview', icon: <IconDashboard width={16} height={16} />, group: 'Monitor' },
-  { id: 'live', label: 'Live status', icon: <IconServer width={16} height={16} />, group: 'Monitor' },
-  { id: 'activity', label: 'Audit log', icon: <IconActivity width={16} height={16} />, group: 'Monitor' },
-  { id: 'games', label: 'Games', icon: <IconGamepad width={16} height={16} />, group: 'Content' },
-  { id: 'users', label: 'Players', icon: <IconUsers width={16} height={16} />, group: 'Content' },
-  { id: 'sessions', label: 'Sessions', icon: <IconChart width={16} height={16} />, group: 'Content' },
-  { id: 'scores', label: 'Scores', icon: <IconTrophy width={16} height={16} />, group: 'Content' },
-  { id: 'tickets', label: 'Tickets', icon: <IconTicket width={16} height={16} />, group: 'Operations' },
-  { id: 'settings', label: 'Settings', icon: <IconSettings width={16} height={16} />, group: 'Operations' },
+  { id: 'overview', label: 'Overview', icon: <IconDashboard width={16} height={16} />, group: 'Workspace' },
+  { id: 'live', label: 'Service health', icon: <IconServer width={16} height={16} />, group: 'Workspace' },
+  { id: 'activity', label: 'Audit trail', icon: <IconActivity width={16} height={16} />, group: 'Workspace' },
+  { id: 'games', label: 'Games', icon: <IconGamepad width={16} height={16} />, group: 'Manage' },
+  { id: 'users', label: 'Players', icon: <IconUsers width={16} height={16} />, group: 'Manage' },
+  { id: 'sessions', label: 'Sessions', icon: <IconChart width={16} height={16} />, group: 'Manage' },
+  { id: 'scores', label: 'Scores', icon: <IconTrophy width={16} height={16} />, group: 'Manage' },
+  { id: 'tickets', label: 'Support tickets', icon: <IconTicket width={16} height={16} />, group: 'System' },
+  { id: 'settings', label: 'Settings', icon: <IconSettings width={16} height={16} />, group: 'System' },
 ];
 
 export function AdminShell({ admin, initial }: { admin: { username: string; role: string }; initial: OverviewData }) {
@@ -129,7 +128,7 @@ export function AdminShell({ admin, initial }: { admin: { username: string; role
       {/* sidebar */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex w-[240px] flex-col border-r border-white/[0.09] bg-[#090909] transition-transform duration-200 ease-out lg:translate-x-0',
+          'fixed inset-y-0 left-0 z-50 flex w-[240px] flex-col border-r border-white/10 bg-[#080808] transition-transform duration-150 lg:translate-x-0',
           navOpen ? 'translate-x-0' : '-translate-x-full',
         )}
       >
@@ -161,13 +160,10 @@ export function AdminShell({ admin, initial }: { admin: { username: string; role
                           setNavOpen(false);
                         }}
                         className={cn(
-                          'group relative flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2.5 text-[13px] font-semibold transition-colors duration-150',
-                          active ? 'bg-white/[0.09] text-white' : 'text-neutral-400 hover:bg-white/[0.045] hover:text-white',
+                          'group flex w-full items-center gap-2.5 border-l-2 px-2.5 py-2.5 text-[13px] font-semibold transition-colors duration-100',
+                          active ? 'border-white bg-white text-black' : 'border-transparent text-neutral-400 hover:bg-white/[0.05] hover:text-white',
                         )}
                       >
-                        {active && (
-                          <motion.span layoutId="admin-active" className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-brand-400" />
-                        )}
                         <span className={cn(active ? 'text-white' : 'text-neutral-500 group-hover:text-neutral-200')}>{t.icon}</span>
                         <span className="flex-1 text-left">{t.label}</span>
                         {t.id === 'tickets' && openTickets > 0 && (
@@ -183,7 +179,7 @@ export function AdminShell({ admin, initial }: { admin: { username: string; role
         </nav>
 
         <div className="border-t border-white/[0.07] p-3">
-          <div className="mb-2.5 rounded-xl border border-white/[0.07] bg-white/[0.022] px-3 py-2.5">
+          <div className="mb-2.5 border border-white/10 px-3 py-2.5">
             <p className="flex items-center gap-1.5 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-[color:var(--text-faint)]">
               <span className={cn('h-1.5 w-1.5 rounded-full', refreshing ? 'bg-[#fbbf24]' : 'bg-[#4ade80]')} />
               {refreshing ? 'Syncing' : 'Live'}
@@ -221,7 +217,7 @@ export function AdminShell({ admin, initial }: { admin: { username: string; role
             {data.kpis.healthyServices === data.kpis.totalServices ? 'All healthy' : `${data.kpis.totalServices - data.kpis.healthyServices} affected`}
           </Badge>
           {data.kpis.openTickets > 0 && (
-            <button onClick={() => navigateToTab('tickets')} className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.03] text-white/70 transition-colors hover:text-white">
+            <button onClick={() => navigateToTab('tickets')} className="relative flex h-9 w-9 items-center justify-center border border-white/10 text-white/70 transition-colors hover:bg-white/5 hover:text-white">
               <IconBell width={16} height={16} />
               <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#fb7185] px-1 font-mono text-[10px] font-bold text-black">
                 {data.kpis.openTickets}
@@ -231,14 +227,7 @@ export function AdminShell({ admin, initial }: { admin: { username: string; role
         </header>
 
         <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={tab}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
-            >
+          <div key={tab}>
               {tab === 'overview' && <OverviewPanel data={data} onRefresh={() => refresh()} onNavigate={(t) => navigateToTab(t as TabId)} />}
               {tab === 'live' && <LivePanel statuses={data.status} onChanged={() => refresh(true)} />}
               {tab === 'games' && <GamesPanel />}
@@ -254,12 +243,11 @@ export function AdminShell({ admin, initial }: { admin: { username: string; role
                   onChanged={() => refresh(true)}
                 />
               )}
-            </motion.div>
-          </AnimatePresence>
+          </div>
         </main>
 
         <footer className="border-t border-white/[0.07] px-4 py-4 text-center text-[11px] text-[color:var(--text-faint)] sm:px-6">
-          Dash Control Plane · signed in as {admin.username} · Made by Ritam Das from India
+          Dash Cloud / Administration · Signed in as {admin.username}
           {refreshing && <Spinner size={11} className="ml-2 inline-block align-middle" />}
         </footer>
       </div>
