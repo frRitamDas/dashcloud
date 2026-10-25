@@ -6,19 +6,29 @@ export async function adminApi<T = unknown>(
   options: { method?: string; body?: unknown; query?: Record<string, string | number | boolean | undefined> } = {},
 ): Promise<T> {
   const url = new URL(path, window.location.origin);
+  if (url.origin !== window.location.origin) throw new Error('Admin requests must stay on this site.');
   if (options.query) {
     for (const [k, v] of Object.entries(options.query)) {
       if (v !== undefined && v !== '') url.searchParams.set(k, String(v));
     }
   }
 
-  const res = await fetch(url.toString(), {
-    method: options.method ?? 'GET',
-    credentials: 'same-origin',
-    headers: options.body ? { 'content-type': 'application/json' } : undefined,
-    body: options.body ? JSON.stringify(options.body) : undefined,
-    cache: 'no-store',
-  });
+  let res: Response;
+  try {
+    res = await fetch(url.toString(), {
+      method: options.method ?? 'GET',
+      credentials: 'same-origin',
+      headers: options.body !== undefined ? { 'content-type': 'application/json' } : undefined,
+      body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+      cache: 'no-store',
+      signal: AbortSignal.timeout(15_000),
+    });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'TimeoutError') {
+      throw new Error('The request took too long. Check your connection and try again.');
+    }
+    throw new Error('Could not reach Dash Cloud. Check your connection and try again.');
+  }
 
   let payload: unknown = null;
   try {
@@ -28,9 +38,18 @@ export async function adminApi<T = unknown>(
   }
 
   if (!res.ok) {
-    const p = payload as { error?: string; issues?: { path: string; message: string }[] } | null;
-    const detail = p?.issues?.length ? p.issues.map((i) => `${i.path}: ${i.message}`).join(' · ') : '';
-    throw new Error([p?.error ?? `Request failed (${res.status})`, detail].filter(Boolean).join(' — '));
+    const p = payload as { error?: string; issues?: { path?: string | (string | number)[]; message?: string }[] } | null;
+    const detail = p?.issues?.length
+      ? p.issues.map((i) => `${Array.isArray(i.path) ? i.path.join('.') : i.path ?? 'field'}: ${i.message ?? 'Invalid value'}`).join(' · ')
+      : '';
+    const message = res.status === 401
+      ? 'Your admin session has expired. Sign in again.'
+      : res.status === 403
+        ? 'You do not have permission to perform this action.'
+        : res.status === 429
+          ? (p?.error ?? 'Too many requests. Wait a moment and try again.')
+          : (p?.error ?? `Request failed (${res.status})`);
+    throw new Error([message, detail].filter(Boolean).join(' — '));
   }
 
   return payload as T;
