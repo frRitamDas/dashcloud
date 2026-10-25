@@ -32,6 +32,7 @@ export function GameArt({
   coverUrl,
   className,
   rounded = true,
+  priority = false,
 }: {
   slug: string;
   title: string;
@@ -40,6 +41,7 @@ export function GameArt({
   coverUrl?: string | null;
   className?: string;
   rounded?: boolean;
+  priority?: boolean;
 }) {
   const uid = useId().replace(/:/g, '');
   const seed = hashString(slug || title);
@@ -55,7 +57,8 @@ export function GameArt({
         src={coverUrl}
         alt={title}
         className={`${className ?? ''} h-full w-full object-cover ${rounded ? 'rounded-xl2' : ''}`}
-        loading="lazy"
+        loading={priority ? 'eager' : 'lazy'}
+        fetchPriority={priority ? 'high' : 'auto'}
       />
     );
   }
