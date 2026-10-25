@@ -89,7 +89,7 @@ export function GameCard({ game, priority = false }: { game: Game; priority?: bo
       <div className="relative">
         <Link href={`/games/${game.slug}`} className="block focus:outline-none" aria-label={`View ${game.title}`}>
           <div className="relative aspect-[4/3] overflow-hidden border border-white/10 bg-[#111]">
-            <GameArt slug={game.slug} title={game.title} genre={game.genre} accent={game.accent} coverUrl={game.cover_url} rounded={false} />
+            <GameArt slug={game.slug} title={game.title} genre={game.genre} accent={game.accent} coverUrl={game.cover_url} rounded={false} priority={priority} />
             <span className="absolute left-2.5 top-2.5 bg-black px-2 py-1 text-[9px] font-bold uppercase tracking-[.12em] text-white">{status}</span>
             {priority && <span className="absolute bottom-2.5 left-2.5 border border-white/30 bg-black/80 px-2 py-1 text-[9px] font-bold uppercase tracking-[.12em] text-white">Featured</span>}
           </div>
