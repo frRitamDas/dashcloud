@@ -57,6 +57,7 @@ export function AdminShell({ admin, initial }: { admin: { username: string; role
   const [data, setData] = useState<OverviewData>(initial);
   const [refreshing, setRefreshing] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
   const [lastSync, setLastSync] = useState<Date>(new Date());
 
   const refresh = useCallback(async (silent = false) => {
@@ -87,8 +88,11 @@ export function AdminShell({ admin, initial }: { admin: { username: string; role
   }, [router, searchParams]);
 
   useEffect(() => {
-    const id = setInterval(() => refresh(true), 20_000);
-    return () => clearInterval(id);
+    // Avoid background polling when the console is hidden in another tab.
+    const id = window.setInterval(() => {
+      if (document.visibilityState === 'visible') void refresh(true);
+    }, 30_000);
+    return () => window.clearInterval(id);
   }, [refresh]);
 
   useEffect(() => {
@@ -105,11 +109,15 @@ export function AdminShell({ admin, initial }: { admin: { username: string; role
   }, [navigateToTab]);
 
   async function logout() {
+    if (loggingOut) return;
+    setLoggingOut(true);
     try {
       await adminApi('/api/admin/logout', { method: 'POST' });
-    } finally {
       router.push('/admin/login');
       router.refresh();
+    } catch (err) {
+      push(err instanceof Error ? err.message : 'Could not sign out. Please retry.', 'error');
+      setLoggingOut(false);
     }
   }
 
@@ -121,7 +129,7 @@ export function AdminShell({ admin, initial }: { admin: { username: string; role
       {/* sidebar */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex w-[248px] flex-col border-r border-white/[0.07] bg-[#0b0b0b] transition-transform duration-300 lg:translate-x-0',
+          'fixed inset-y-0 left-0 z-50 flex w-[240px] flex-col border-r border-white/[0.09] bg-[#090909] transition-transform duration-200 ease-out lg:translate-x-0',
           navOpen ? 'translate-x-0' : '-translate-x-full',
         )}
       >
@@ -153,14 +161,14 @@ export function AdminShell({ admin, initial }: { admin: { username: string; role
                           setNavOpen(false);
                         }}
                         className={cn(
-                          'group relative flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13px] font-medium transition-colors',
-                          active ? 'bg-white/[0.07] text-white' : 'text-[color:var(--text-dim)] hover:bg-white/[0.035] hover:text-white',
+                          'group relative flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2.5 text-[13px] font-semibold transition-colors duration-150',
+                          active ? 'bg-white/[0.09] text-white' : 'text-neutral-400 hover:bg-white/[0.045] hover:text-white',
                         )}
                       >
                         {active && (
                           <motion.span layoutId="admin-active" className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-brand-400" />
                         )}
-                        <span className={cn(active ? 'text-brand-200' : 'text-[color:var(--text-faint)] group-hover:text-brand-300')}>{t.icon}</span>
+                        <span className={cn(active ? 'text-white' : 'text-neutral-500 group-hover:text-neutral-200')}>{t.icon}</span>
                         <span className="flex-1 text-left">{t.label}</span>
                         {t.id === 'tickets' && openTickets > 0 && (
                           <span className="rounded-md bg-[rgba(251,113,133,0.16)] px-1.5 py-0.5 font-mono text-[10.5px] font-bold text-[#fda4af]">{openTickets}</span>
@@ -186,8 +194,8 @@ export function AdminShell({ admin, initial }: { admin: { username: string; role
             <button onClick={() => refresh()} className="btn-ghost flex-1 justify-center !py-2 !text-[12px]">
               Refresh
             </button>
-            <button onClick={logout} className="btn-ghost !py-2 !text-[12px]">
-              <IconLogout width={14} height={14} />
+            <button onClick={logout} disabled={loggingOut} className="btn-ghost !py-2 !text-[12px]" aria-label="Sign out">
+              {loggingOut ? <Spinner size={13} /> : <IconLogout width={14} height={14} />}
             </button>
           </div>
         </div>
@@ -229,7 +237,7 @@ export function AdminShell({ admin, initial }: { admin: { username: string; role
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.26, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
             >
               {tab === 'overview' && <OverviewPanel data={data} onRefresh={() => refresh()} onNavigate={(t) => navigateToTab(t as TabId)} />}
               {tab === 'live' && <LivePanel statuses={data.status} onChanged={() => refresh(true)} />}
