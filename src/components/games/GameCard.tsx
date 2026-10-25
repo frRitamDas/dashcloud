@@ -18,7 +18,7 @@ const statusLabel: Record<Game['status'], string> = {
   soon: 'Coming soon',
 };
 
-export function GameCard({ game, priority = false, index = 0 }: { game: Game; priority?: boolean; index?: number }) {
+export function GameCard({ game, priority = false }: { game: Game; priority?: boolean; index?: number }) {
   const router = useRouter();
   const { user } = useUser();
   const { push } = useToast();
@@ -28,8 +28,9 @@ export function GameCard({ game, priority = false, index = 0 }: { game: Game; pr
   const [favError, setFavError] = useState(false);
   const playable = game.status !== 'soon' && game.status !== 'maintenance';
 
-  async function loadFav() {
-    if (loadedFav || !user) return;
+  async function loadFav(): Promise<boolean | null> {
+    if (loadedFav) return faved;
+    if (!user) return null;
     try {
       const { data, error } = await supabaseBrowser()
         .from('favorites')
@@ -38,11 +39,14 @@ export function GameCard({ game, priority = false, index = 0 }: { game: Game; pr
         .eq('game_id', game.id)
         .maybeSingle();
       if (error) throw error;
-      setFaved(Boolean(data));
+      const exists = Boolean(data);
+      setFaved(exists);
       setLoadedFav(true);
       setFavError(false);
+      return exists;
     } catch {
       setFavError(true);
+      return null;
     }
   }
 
@@ -57,15 +61,20 @@ export function GameCard({ game, priority = false, index = 0 }: { game: Game; pr
     if (favBusy) return;
     setFavBusy(true);
     try {
+      const currentFaved = loadedFav ? faved : await loadFav();
+      if (currentFaved === null) {
+        push('Could not check your saved games. Please try again.', 'error');
+        return;
+      }
       const db = supabaseBrowser();
-      const result = faved
+      const result = currentFaved
         ? await db.from('favorites').delete().eq('user_id', user.id).eq('game_id', game.id)
         : await db.from('favorites').insert({ user_id: user.id, game_id: game.id });
       if (result.error) throw result.error;
-      setFaved(!faved);
+      setFaved(!currentFaved);
       setLoadedFav(true);
       setFavError(false);
-      push(faved ? 'Removed from favourites.' : 'Saved to your favourites.', 'success');
+      push(currentFaved ? 'Removed from favourites.' : 'Saved to your favourites.', 'success');
     } catch {
       push('Your favourites could not be updated. Please try again.', 'error');
     } finally {
